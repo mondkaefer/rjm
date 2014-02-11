@@ -1,0 +1,173 @@
+#!/share/apps/Python/noarch/2.7.4/gcc-4.4.6/bin/python
+import re
+import os
+import sys
+import datetime
+import argparse
+import traceback
+import binascii
+
+h = {
+  'account': 
+    'account code this job is run under, e.g. uoa00042',
+  'cmd': 
+    'Command to run.',
+  'basedir':
+    'Base directory of the job where the job directory for this job will be created. ' +
+    'The value of the parameter jobname postfixed with the current date and time will ' +
+    'be used to create the job directory.',
+  'module':
+    'Module to be loaded prior to job execution. Multiple module parameters can be specified',
+  'mem':
+    'Amount of memory [GigaBytes] required by this job.',
+  'vmem':
+    'Amount of virtual memory [GigaBytes] required by this job. If not specified, ' +
+    'the value of the parameter memorygb will be used.',
+  'jobname':
+    'Name of the job. The value of the parameter jobname postfixed with the current date and time will ' +
+    'be used to create the job directory.',
+  'jobtype':
+    'Type of the job. The number of processes and threads is specified separated by colons. ' +
+    'For serial/multi-threaded jobs: serial:<#threads>. ' +
+    'For MPI jobs: mpi:<#processes>[:<#threads>]. ' +
+    'Examples: serial, serial:5, mpi:4, mpi:5:4, mpich:6',
+  'queue': 
+    'Queue to be used for this job',
+  'walltime':
+    'Wall clock time this job will run for.',
+  'extension':
+    'Additional scheduler directive',
+}
+  
+def create_job_dir_name(basedir, jobname):
+  # Fixme: handle potential whitespaces
+  now = datetime.datetime.now()
+  now = '%s' % now
+  now = re.sub(r"\s+", '_', now)
+  jobdir ='%s%s%s_%s' % (basedir, os.path.sep, jobname, now)
+  if os.path.exists(jobdir):
+    # unlikely, but may perhaps happen
+    jobdir = '%s_%s' % (jobdir, binascii.b2a_hex(os.urandom(15)))
+    if os.path.exists(jobdir):
+      # giving up
+      raise Exception('Generation of unique job directory name failed')
+  return jobdir
+
+def create_job_description(jobdir, cmds, modules, walltime, mem, vmem, jobtype, account):
+  job_file = '%s%s.job.ll' % (jobdir, os.path.sep)
+  f = open(job_file, "w+")
+  f.write('#@ shell = /bin/bash%s' % os.linesep)
+  f.write('#@ class = default%s' % os.linesep)
+  f.write('#@ group = nesi%s' % os.linesep)
+  f.write('#@ output = stdout.txt%s' % os.linesep)
+  f.write('#@ error = stderr.txt%s' % os.linesep)
+  f.write('#@ initialdir = %s%s' % (jobdir, os.linesep))
+  f.write('#@ environment = COPY_ALL%s' % os.linesep)
+  f.write('#@ wall_clock_limit = %s%s' % (walltime, os.linesep))
+
+  if account:
+    f.write('#@ account_no = %s%s' % (account, os.linesep))
+    
+  mem_value = int(mem[0:-1])
+  mem_unit = mem[-1]
+  mem_factor = 1024
+
+  vmem_value = int(mem[0:-1])
+  vmem_unit = vmem[-1]
+  vmem_factor = 1024
+
+  if mem_unit == 'M':
+    mem_string = '%smb' % mem_value
+  elif mem_unit == 'G':
+    mem_string = '%sgb' % mem_value
+    mem_factor *= 1024
+  else:
+    raise Exception("Invalid memory specification: %s" % mem)
+
+  if vmem_unit == 'M':
+    vmem_string = '%smb' % vmem_value
+  elif vmem_unit == 'G':
+    vmem_string = '%sgb' % vmem_value
+    vmem_factor *= 1024
+  else:
+    raise Exception("Invalid virtual memory specification: %s" % vmem)
+   
+  f.write('#@ resources = ConsumableMemory(%s) ConsumableVirtualMemory(%s)%s' % (mem_string, vmem_string, os.linesep))
+  
+  # Determine serial, mpi, mpich etc
+  tokens = jobtype.split(':')
+  if tokens[0] != 'serial' and tokens[0] != 'mpi' and tokens[0] != 'mpich':
+    raise Exception("Job type must be either serial or mpi")
+  if tokens[0] == 'serial':
+    f.write('#@ job_type = serial%s' % os.linesep)
+    if len(tokens) == 2:
+      f.write('#@ parallel_threads = %s%s' % (tokens[1], os.linesep))      
+  elif tokens[0] == 'mpi':
+    f.write('#@ job_type = parallel%s' % os.linesep)
+    if len(tokens) < 2:
+      raise Exception('Number of tasks not specified')
+    f.write('#@ total_tasks = %s%s' % (tokens[1], os.linesep))      
+    if len(tokens) == 3:
+      f.write('#@ parallel_threads = %s%s' % (tokens[2], os.linesep))      
+    f.write('#@ blocking = unlimited%s' % os.linesep)
+  else:
+    f.write('#@ job_type = mpich%s' % os.linesep)
+    if len(tokens) < 2:
+      raise Exception('Number of tasks not specified')
+    f.write('#@ total_tasks = %s%s' % (tokens[1], os.linesep))      
+    if len(tokens) == 3:
+      f.write('#@ parallel_threads = %s%s' % (tokens[2], os.linesep)) 
+    f.write('#@ blocking = unlimited%s' % os.linesep)
+  
+  f.write('#@ queue%s' % os.linesep)
+
+  f.write('%s' % os.linesep)
+
+  f.write('ulimit -m %s -v %s%s' % (mem_value*mem_factor, vmem_value*vmem_factor, os.linesep))
+  if modules:
+    for module in modules:
+      f.write('module load %s%s' % (module, os.linesep))
+  for cmd in cmds:
+    f.write('%s%s' % (cmd, os.linesep))
+  f.close()
+  return job_file
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('-a','--account', help=h['account'], required=False, type=str)
+parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
+parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str)
+parser.add_argument('-e','--module', help=h['module'], required=False, type=str, action='append')
+parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
+parser.add_argument('-m','--mem', help=h['mem'], required=True, type=str)
+parser.add_argument('-n','--jobname', help=h['jobname'], required=False, type=str, default='job')
+parser.add_argument('-q','--queue', help=h['queue'], required=False, type=str)
+parser.add_argument('-v','--vmem', help=h['vmem'], required=False, type=str)
+parser.add_argument('-w','--walltime', help=h['walltime'], required=True, type=str)
+
+try:
+  args = parser.parse_args()
+except:
+  print >> sys.stderr, 'Error: Failed to parse command-line arguments.'
+  sys.exit(1)
+  
+args.vmem = args.mem if not args.vmem else args.vmem
+
+# Create job directory
+try:
+  jobdir = create_job_dir_name(args.basedir, args.jobname)
+  os.makedirs(jobdir)
+except:
+  print >> sys.stderr, 'Error: Creation of job directory %s failed.' % jobdir
+  print >> sys.stderr, 'Details:'
+  print >> sys.stderr, traceback.format_exc()
+  sys.exit(1)
+
+# Create job description
+try:
+  jobfile = create_job_description(jobdir, args.cmd, args.module, args.walltime, args.mem, args.vmem, args.jobtype, args.account)
+  print '%s,%s' % (jobdir, jobfile)
+except:
+  print >> sys.stderr, 'Error: Creation of job description failed.'
+  print >> sys.stderr, 'Details:'
+  print >> sys.stderr, traceback.format_exc()
+  sys.exit(1)
