@@ -41,9 +41,7 @@ h = {
   
 def create_job_dir_name(basedir, jobname):
   # Fixme: handle potential whitespaces
-  now = datetime.datetime.now()
-  now = '%s' % now
-  now = re.sub(r"\s+", '_', now)
+  now = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S.%f')
   jobdir ='%s%s%s_%s' % (basedir, os.path.sep, jobname, now)
   if os.path.exists(jobdir):
     # unlikely, but may perhaps happen
