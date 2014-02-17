@@ -9,6 +9,7 @@ import stat
 import StringIO
 import socket
 import cer.client.util as util
+import cer.client.util.config as config
 from datetime import datetime
 from Crypto.PublicKey import RSA
 from Crypto import Random
@@ -141,10 +142,10 @@ def create_ssh_rsa_key_pair(passphrase, bits=2048):
 
   # extract keys
   privkey = keypair.exportKey('PEM', passphrase, pkcs=1)
-  pubkey = '%s %s %s' % (keypair.publickey().exportKey("OpenSSH"), util.SSH_PRIV_KEY, str(datetime.now()))
+  pubkey = '%s %s %s' % (keypair.publickey().exportKey("OpenSSH"), config.SSH_PRIV_KEY, str(datetime.now()))
 
   # writing keys to files
-  priv_key_file = util.get_priv_ssh_key()
+  priv_key_file = config.get_priv_ssh_key()
   pub_key_file = '%s.pub' % priv_key_file
 
   with open("%s" % priv_key_file, 'w', stat.S_IWUSR | stat.S_IRUSR) as f:
