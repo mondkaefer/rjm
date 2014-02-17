@@ -60,9 +60,9 @@ def get_local_job_directories(localjobdirfile):
   return util.get_local_job_directories(localjobdirfile)
 
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
-def read_job_config_file(localdir, job_config_file):
+def read_job_config_file(job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
-  return config.read_job_config_file(localdir, job_config_file)
+  return config.read_job_config_file(job_config_file)
   
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def stage_out_file(sftp, remotefile, localfile):
@@ -101,7 +101,7 @@ def create_or_update_job_config_file(localdir, props_dict):
 
 def stage_out(sftp, localdir, remotedir):
   ''' download all files for this job, if they have not already been downloaded '''
-  job_config = read_job_config_file(localdir, job_config_file)
+  job_config = read_job_config_file('%s%s.job.ini' % (localdir, os.path.sep))
   if not eval(job_config['JOB']['download_done']):
     remotefiles = get_outputfile_names(localdir, remotedir)
     log.debug('files to download: %s' % str(remotefiles))
@@ -119,7 +119,7 @@ def stage_out(sftp, localdir, remotedir):
       create_or_update_job_config_file(localdir, { 'JOB': { 'download_done': True } })
       log.info('done downloading results into directory %s' % localdir)
   else:
-    log.info('results have already been downloaded already for job in local directory %s' % localdir)
+    log.info('results have already been downloaded for job in local directory %s' % localdir)
 
 # read local job directories from file
 try:
@@ -142,7 +142,7 @@ jobs = {}
 for localdir in localdirs:
   job_config_file = '%s%s.job.ini' % (localdir, os.path.sep)
   try:
-    job_config = read_job_config_file(localdir, job_config_file)
+    job_config = read_job_config_file(job_config_file)
     job_id = job_config['JOB']['id']
     remote_directory = job_config['JOB']['remote_directory']
     jobs[job_id] = { 'remote_directory': remote_directory, 'local_directory': localdir }
@@ -159,7 +159,7 @@ while True:
     jobmap = job.get_job_statuses(ssh_conn)
     for job_id in jobs.keys():
       if job_id not in jobmap:
-        log.info('job %s finished.' % job_id)
+        log.info('job %s finished.' % jobs[job_id]['local_directory'])
         try:
           stage_out(ssh_conn.open_sftp(), jobs[job_id]['local_directory'], jobs[job_id]['remote_directory'])
         except:
