@@ -54,9 +54,9 @@ def get_local_job_directories(localjobdirfile):
   return util.get_local_job_directories(localjobdirfile)
 
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
-def read_job_config_file(localdir, job_config_file):
+def read_job_config_file(job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
-  return config.read_job_config_file(localdir, job_config_file)
+  return config.read_job_config_file(job_config_file)
 
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def remove_directory(ssh_conn, remote_directory):
@@ -90,7 +90,7 @@ remote_directories = []
 for localdir in localdirs:
   job_config_file = '%s%s.job.ini' % (localdir, os.path.sep)
   try:
-    job_config = read_job_config_file(localdir, job_config_file)
+    job_config = read_job_config_file(job_config_file)
     if 'remote_directory' in job_config['JOB']:
       remote_directories.append(job_config['JOB']['remote_directory'])
     else:
