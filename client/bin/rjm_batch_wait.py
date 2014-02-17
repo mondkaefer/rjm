@@ -3,15 +3,21 @@ import sys
 import time
 import argparse
 import traceback
-import ConfigParser
 import cer.client.ssh as ssh
 import cer.client.job as job
 import cer.client.util as util
+import cer.client.util.config as config
 from cer.client.util import Retry
+
+def cleanup():
+  if ssh_conn:
+    try:
+      ssh.close_connection(ssh_conn)
+    except:
+      pass
 
 # name of the file that contains the list of files to be downloaded after a job
 outfiles_file = 'gridfiles_out.txt'
-logfile = None
 ssh_conn = None
 sftp_conn = None
 
@@ -27,59 +33,55 @@ h = {
     'Number of seconds to wait between polling for job status.',
 }
 
-def cleanup():
-  if ssh_conn:
-    try:
-      ssh.close_connection(ssh_conn)
-    except:
-      pass
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('-f','--localjobdirfile', help=h['localjobdirfile'], required=True, type=str)
+parser.add_argument('-l','--logfile', help=h['logfile'], required=False, type=str)
+parser.add_argument('-ll','--loglevel', help=h['loglevel'], required=False, type=str, choices=['debug','info','warn','error','critical'])
+parser.add_argument('-z','--pollingintervalsec', help=h['pollingintervalsec'], required=True, type=int)
+args = parser.parse_args()
 
-@Retry(max_attempts=5, mm=(0.5,5))
+if args.logfile or args.loglevel:
+  util.setup_logging(args.logfile, args.loglevel)
+log = util.get_log()
+
+# read central configuration file
+try:
+  conf = config.get_config()
+  cluster = conf['CLUSTER']
+  retry = conf['RETRY']
+except:
+  log.critical('failed to read config file %s' % config.get_config_file())
+  cleanup()
+  sys.exit(1)
+
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def get_local_job_directories(localjobdirfile):
   ''' get the list of local job directories from file. '''
-  localdirs = []
-  localdirstmp = util.read_lines_from_file(localjobdirfile)
-  for localdir in localdirstmp:
-    if os.path.exists(localdir):
-      localdirs.append(localdir)
-    else:
-      log.warn('local job directory does not exist: %s. Skipping.' % localdir)
-  return localdirs
+  return util.get_local_job_directories(localjobdirfile)
 
-@Retry(max_attempts=5, mm=(0.5,5))
-def read_job_config_file(job_config_file):
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+def read_job_config_file(localdir, job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
-  if not os.path.isfile(job_config_file):
-    raise Exception('no job config file found in %s.' % localdir)
-  try:
-    parser = ConfigParser.RawConfigParser()
-    parser.read(job_config_file)
-    job_id = parser.get('JOB', 'id')
-    remote_job_directory = parser.get('JOB', 'remote_job_directory')
-    log.debug('read from %s: (id=%s, remote_job_directory=%s)' % (job_config_file, job_id, remote_job_directory))
-  except:
-    raise Exception('failed to read from config file %s' % job_config_file)
+  return config.read_job_config_file(localdir, job_config_file)
   
-  if not job_id or not remote_job_directory:
-    raise Exception('got empty values from config file %s' % job_config_file)
-  
-  return (job_id, remote_job_directory)
-  
-@Retry(max_attempts=5, mm=(0.5,5))
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def stage_out_file(sftp, remotefile, localfile):
   ''' download an individual file. '''
   log.debug('downloading remote file %s to local file %s' % (remotefile, localfile))
   sftp.get(remotefile, localfile)
 
-@Retry(max_attempts=5, mm=(0.5,5))
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def get_outputfile_names(localdir, remotedir):
   ''' get the full path of the remote files to be downloaded after a job is done '''
   files_out = '%s%s%s' % (localdir,os.path.sep,outfiles_file)
-  filenamestmp = util.read_lines_from_file(files_out)
-  filenames = ['%s/%s' % (remotedir, name) for name in filenamestmp]
+  filenames = []
+  if os.path.isfile(files_out):
+    filenamestmp = util.read_lines_from_file(files_out)
+    filenames = ['%s/%s' % (remotedir, name) for name in filenamestmp]
   return filenames
+  
 
-@Retry(max_attempts=5, mm=(0.5,5))
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def rename_file(old, new):
   ''' rename a file.
       note, that on Windows os.rename() causes an exception if the new file already exists.
@@ -92,34 +94,32 @@ def rename_file(old, new):
   if not os.path.isfile(new):
     raise Exception('renaming file %s to %s failed.' % (old, new))
 
+@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+def create_or_update_job_config_file(localdir, props_dict):
+  ''' create metadata file for job in local job directory (ini-format) '''
+  config.create_or_update_job_config_file(localdir, props_dict)
+
 def stage_out(sftp, localdir, remotedir):
-  ''' download all files for this job '''
-  remotefiles = get_outputfile_names(localdir, remotedir)
-  log.debug('files to download: %s' % str(remotefiles))
-  if remotefiles:
-    for remotefile in remotefiles:
-      name = os.path.basename(remotefile)
-      localtempfile = '%s%s.%s' % (localdir, os.path.sep, name)
-      localfile = '%s%s%s' % (localdir, os.path.sep, name)
-      try:
-        stage_out_file(sftp, remotefile, localtempfile)
-      except:
-        log.warn('failed to download file %s to %s' % (remotefile, localfile))
-        continue
-      rename_file(localtempfile, localfile)
-    log.info('done downloading results into directory %s' % localdir)
-
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('-f','--localjobdirfile', help=h['localjobdirfile'], required=True, type=str)
-parser.add_argument('-l','--logfile', help=h['logfile'], required=False, type=str)
-parser.add_argument('-ll','--loglevel', help=h['loglevel'], required=False, type=str, choices=['debug','info','warn','error','critical'])
-parser.add_argument('-z','--pollingintervalsec', help=h['pollingintervalsec'], required=True, type=int)
-args = parser.parse_args()
-
-# change default logging configuration if required
-if args.logfile or args.loglevel:
-  util.setup_logging(args.logfile, args.loglevel)
-log = util.get_log()
+  ''' download all files for this job, if they have not already been downloaded '''
+  job_config = read_job_config_file(localdir, job_config_file)
+  if not eval(job_config['JOB']['download_done']):
+    remotefiles = get_outputfile_names(localdir, remotedir)
+    log.debug('files to download: %s' % str(remotefiles))
+    if remotefiles:
+      for remotefile in remotefiles:
+        name = os.path.basename(remotefile)
+        localtempfile = '%s%s.%s' % (localdir, os.path.sep, name)
+        localfile = '%s%s%s' % (localdir, os.path.sep, name)
+        try:
+          stage_out_file(sftp, remotefile, localtempfile)
+        except:
+          log.warn('failed to download file %s to %s' % (remotefile, localfile))
+          continue
+        rename_file(localtempfile, localfile)
+      create_or_update_job_config_file(localdir, { 'JOB': { 'download_done': True } })
+      log.info('done downloading results into directory %s' % localdir)
+  else:
+    log.info('results have already been downloaded already for job in local directory %s' % localdir)
 
 # read local job directories from file
 try:
@@ -142,38 +142,28 @@ jobs = {}
 for localdir in localdirs:
   job_config_file = '%s%s.job.ini' % (localdir, os.path.sep)
   try:
-    job_id, remote_job_directory = read_job_config_file(job_config_file)
-    jobs[job_id] = { 'remote_job_directory': remote_job_directory, 'local_job_directory': localdir }
+    job_config = read_job_config_file(localdir, job_config_file)
+    job_id = job_config['JOB']['id']
+    remote_directory = job_config['JOB']['remote_directory']
+    jobs[job_id] = { 'remote_directory': remote_directory, 'local_directory': localdir }
   except:
     log.warn('failed to read job config file %s. skipping job.' % job_config_file)
-
-# Read SSH connection parameters
-try:
-  parser = util.get_config_parser()
-  host = parser.get('MAIN', 'remote_host')
-  user = parser.get('MAIN', 'remote_user')
-  privkey = parser.get('MAIN', 'ssh_priv_key_file')
-  log.debug('SSH configuration: host=%s, user=%s, privkey=%s' % (host, user, privkey))
-except:
-  log.critical('failed to read connection parameters. %s' % traceback.format_exc().strip())
-  cleanup()
-  sys.exit(1)
 
 log.info('waiting for jobs to finish (polling every %s seconds)...' % args.pollingintervalsec)
 while True:
   try:
     log.info('checking for job status of %s jobs...' % len(jobs))
     jobs_new = {}
-    ssh_conn = ssh.open_connection_ssh_agent(host, user, privkey)
+    ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
     log.debug('getting job statuses')
     jobmap = job.get_job_statuses(ssh_conn)
     for job_id in jobs.keys():
       if job_id not in jobmap:
         log.info('job %s finished.' % job_id)
         try:
-          stage_out(ssh_conn.open_sftp(), jobs[job_id]['local_job_directory'], jobs[job_id]['remote_job_directory'])
+          stage_out(ssh_conn.open_sftp(), jobs[job_id]['local_directory'], jobs[job_id]['remote_directory'])
         except:
-          log.warn('failed to download or rename some of the result files for job into %s' % jobs[job_id]['local_job_directory'])
+          log.warn('failed to download or rename some of the result files for job into %s' % jobs[job_id]['local_directory'])
       else:
         jobs_new[job_id] = jobs[job_id]
   except:
