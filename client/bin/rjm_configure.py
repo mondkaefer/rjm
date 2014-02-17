@@ -1,9 +1,8 @@
 import os
 import re
-import sys
 import string
 import getpass
-import cer.client.util as util
+import cer.client.util.config as config
 import cer.client.ssh as ssh
 
 default_host = 'login.uoa.nesi.org.nz'
@@ -47,13 +46,44 @@ def read_passphrase():
     return False
   
   return passphrase
+
+def read_config_file_input():
+  host = raw_input("Name of login node [login.uoa.nesi.org.nz]: ").strip()
+
+  while True:
+    user = raw_input("Your cluster account name (UPI): ").strip()
+    if user:
+      break
+    else:
+      print "Cluster account must not be empty"
+
+  while True:
+    default_account = raw_input("Default account/project code: ").strip()
+    if default_account:
+      break
+    else:
+      print "Default account/project code must not be empty"
+
+  suggestion = '/projects/%s/%s/rjm-jobs' % (default_account, user)
+  default_remote_base_directory = raw_input("Default remote base job directory [%s]: " % suggestion).strip()
+  if not default_remote_base_directory:
+    default_remote_base_directory = suggestion
     
+  if not host:
+    host = default_host
+  
+  return (host, user, default_account, default_remote_base_directory)
+
+passphrase1 = None
+passphrase2 = None
+old_pub_key = None    
 
 print_underscored('Creating configuration directory')
-util.create_config_dir()
+config.create_config_dir()
 
-passphrase1 = ''
-passphrase2 = ''
+if os.path.isfile(config.get_pub_ssh_key()):
+  with open(config.get_pub_ssh_key(), "r") as f:
+    old_pub_key = f.read().strip()
 
 print ''
 print_underscored('Creating SSH key pair')
@@ -81,21 +111,23 @@ print 'Generating SSH key pair. This may take a few seconds...'
 fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)
 
 print ''
-print_underscored('Creating configuration file')
-host = raw_input("Please enter the name of login node [login.uoa.nesi.org.nz]: ").strip()
-if not host:
-  host = default_host
-user = raw_input("Please enter your UPI: ")
-util.create_config_file(host, user, fingerprint)
+print_underscored('Creating configuration file. Need some information.')
+host, user, default_account, default_remote_base_directory = read_config_file_input()
+config.create_config_file(host, user, fingerprint, default_account, default_remote_base_directory)
 
 print ''
 print_underscored('Uploading public key to login node')
-f = open(util.get_pub_ssh_key(), "r")
+f = open(config.get_pub_ssh_key(), "r")
 pubkey = f.read()
 f.close()
 uni_password = getpass.getpass(prompt='Enter you University password: ')
 conn = ssh.open_connection_username_password(host, user, uni_password)
-ssh.run('''echo "%s" >> ~/.ssh/authorized_keys''' % pubkey, conn)
+authz_keys = '${HOME}/.ssh/authorized_keys'
+tmpfile = '${HOME}/.ssh/authorized_keys.tmp'
+if old_pub_key:
+  ssh.run('''cat %s | grep -v '%s' > %s ''' % (authz_keys, old_pub_key, tmpfile), conn)
+  ssh.run('''mv %s %s ''' % (tmpfile, authz_keys), conn)
+ssh.run('''echo '%s' >> %s''' % (pubkey, authz_keys), conn)
 ssh.close_connection(conn)
 
 print ''
