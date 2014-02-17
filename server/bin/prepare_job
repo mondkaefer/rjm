@@ -164,6 +164,8 @@ def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, account):
   
   f.write('ulimit -m %s -v %s%s' % (mem_value*mem_factor, vmem_value*vmem_factor, os.linesep))
   for cmd in cmds:
+    if jobtype.startswith('serial'):
+      cmd = '/share/apps/smpexec_sigxcpu -s %s' % cmd
     f.write('%s%s' % (cmd, os.linesep))
   f.close()
   return job_file
