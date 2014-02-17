@@ -5,8 +5,6 @@ import getpass
 import cer.client.util.config as config
 import cer.client.ssh as ssh
 
-default_host = 'login.uoa.nesi.org.nz'
-
 def print_underscored(msg):
   print msg
   print '#' * len(msg)
@@ -70,7 +68,7 @@ def read_config_file_input():
     default_remote_base_directory = suggestion
     
   if not host:
-    host = default_host
+    host = config.DEFAULT_REMOTE_HOST
   
   return (host, user, default_account, default_remote_base_directory)
 

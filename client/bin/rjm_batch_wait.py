@@ -16,8 +16,6 @@ def cleanup():
     except:
       pass
 
-# name of the file that contains the list of files to be downloaded after a job
-outfiles_file = 'gridfiles_out.txt'
 ssh_conn = None
 sftp_conn = None
 
@@ -73,7 +71,7 @@ def stage_out_file(sftp, remotefile, localfile):
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def get_outputfile_names(localdir, remotedir):
   ''' get the full path of the remote files to be downloaded after a job is done '''
-  files_out = '%s%s%s' % (localdir,os.path.sep,outfiles_file)
+  files_out = '%s%s%s' % (localdir,os.path.sep,config.OUTPUT_FILES_FILE)
   filenames = []
   if os.path.isfile(files_out):
     filenamestmp = util.read_lines_from_file(files_out)

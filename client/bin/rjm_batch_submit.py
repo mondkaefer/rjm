@@ -68,8 +68,6 @@ if args.logfile or args.loglevel:
   util.setup_logging(args.logfile, args.loglevel)
 log = util.get_log()
 
-# name of the file that contains the list of input files to be uploaded for a job
-infiles_file = 'gridfiles_in.txt'
 ssh_conn = None
 
 # read central configuration file
@@ -106,7 +104,7 @@ def stage_in_file(localfile, remotefile):
 @Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
 def get_inputfile_names(localdir):
   ''' get the names of the local files to be uploaded prior to starting the job. '''  
-  files_in = '%s%s%s' % (localdir,os.path.sep,infiles_file)
+  files_in = '%s%s%s' % (localdir, os.path.sep, config.INPUT_FILES_FILE)
   filenames = []
   if os.path.isfile(files_in):
     filenamestmp = util.read_lines_from_file(files_in)
