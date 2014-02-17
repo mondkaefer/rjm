@@ -82,10 +82,10 @@ def create_config_file(host, user, fingerprint, default_account, default_remote_
   f.write('max_wait_s=%s%s' % ('5', os.linesep))
   f.close()
 
-def read_job_config_file(localdir, job_config_file):
+def read_job_config_file(job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
   if not os.path.isfile(job_config_file):
-    raise Exception('no job config file found in %s.' % localdir)
+    raise Exception('config file not found: %s' % job_config_file)
   try:
     cr = ConfigReader()
     cr.read(job_config_file)
