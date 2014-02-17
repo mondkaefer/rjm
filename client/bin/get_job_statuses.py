@@ -1,21 +1,16 @@
-import os
 import sys
-import time
-import argparse
 import traceback
 import cer.client.ssh as ssh
 import cer.client.job as job
-import cer.client.util as util
+import cer.client.util.config as config
 
 ssh_conn = None
 
 # Set up SSH connection
 try:
-  parser = util.get_config_parser()
-  host = parser.get('MAIN', 'remote_host')
-  user = parser.get('MAIN', 'remote_user')
-  privkey = parser.get('MAIN', 'ssh_priv_key_file')
-  ssh_conn = ssh.open_connection_ssh_agent(host, user, privkey)
+  conf = config.get_config()
+  cluster = conf['CLUSTER']
+  ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
 except:
   print >> sys.stderr, "Error: Failed to set up SSH connection"
   print >> sys.stderr, 'Details:'
