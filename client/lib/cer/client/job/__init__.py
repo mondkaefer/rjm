@@ -1,27 +1,22 @@
 import os
 import cer.client.util as util
+import cer.client.util.config as config
 import cer.client.ssh as ssh
 
-REMOTE_COMMANDS = {
-  'PREPARE_JOB': '/share/apps/remoteapi/0.1/prepare_job',
-  'SUBMIT_JOB': '/share/apps/remoteapi/0.1/submit_job',
-  'IS_JOB_DONE': '/share/apps/remoteapi/0.1/is_job_done',
-  'GET_JOB_STATUSES': '/share/apps/remoteapi/0.1/get_job_statuses',
-  'CANCEL_JOBS': '/share/apps/remoteapi/0.1/cancel_jobs',
-}
+# get central configuration
+conf = config.get_config()
+cluster = conf['CLUSTER']
 
 def prepare_job(ssh_conn, basedir, jobname, cmds, mem, vmem, walltime, jobtype, account):  
-  commandline = '%s ' % REMOTE_COMMANDS['PREPARE_JOB'] + \
+  commandline = '%s ' % cluster['remote_prepare_job'] + \
     '--basedir %s ' % basedir + \
     '--jobname %s ' % jobname + \
     '--mem %s ' % mem + \
     '--vmem %s ' % vmem + \
     '--walltime %s ' % walltime + \
-    '--jobtype %s ' % jobtype
+    '--jobtype %s ' % jobtype + \
+    '--account %s ' % account
   
-  if account:
-    commandline = '%s %s' % (commandline, '--account %s ' % account)
-
   for cmd in cmds:
     commandline = '%s %s' % (commandline, '--cmd \'%s\' ' % cmd)
 
@@ -34,7 +29,7 @@ def prepare_job(ssh_conn, basedir, jobname, cmds, mem, vmem, walltime, jobtype, 
   return (jobdir.strip(), jobscript.strip())
   
 def submit_job(ssh_conn, remote_job_description_file):
-  cmd = '%s %s' % (REMOTE_COMMANDS['SUBMIT_JOB'], remote_job_description_file)
+  cmd = '%s %s' % (cluster['remote_submit_job'], remote_job_description_file)
   rc, stdout, stderr = ssh.run(cmd, ssh_conn)
   if rc != 0:
     msg = 'Error: Failed to submit job%s' % os.linesep
@@ -44,7 +39,7 @@ def submit_job(ssh_conn, remote_job_description_file):
   return jobid
   
 def has_finished(ssh_conn, jobid):
-  cmd = '%s %s' % (REMOTE_COMMANDS['IS_JOB_DONE'], jobid)
+  cmd = '%s %s' % (cluster['remote_is_job_done'], jobid)
   rc, stdout, stderr = ssh.run(cmd, ssh_conn)
   if rc != 0:
     msg = 'Error: Failed to get job status for job %s%s' % (jobid,os.linesep)
@@ -53,7 +48,7 @@ def has_finished(ssh_conn, jobid):
   return eval(str(stdout).strip())
   
 def get_job_statuses(ssh_conn):
-  cmd = '%s' % (REMOTE_COMMANDS['GET_JOB_STATUSES'])
+  cmd = '%s' % (cluster['remote_get_job_statuses'])
   rc, stdout, stderr = ssh.run(cmd, ssh_conn)
   if rc != 0:
     msg = 'Error: Failed to get job statuses.%s' % (os.linesep)
@@ -69,7 +64,7 @@ def get_job_statuses(ssh_conn):
 
 def cancel_jobs(ssh_conn, jobids):
   if jobids:
-    cmd = '%s %s' % (REMOTE_COMMANDS['CANCEL_JOBS'], ' '.join(jobids))
+    cmd = '%s %s' % (cluster['remote_cancel_jobs'], ' '.join(jobids))
     rc, stdout, stderr = ssh.run(cmd, ssh_conn)
     if rc != 0:
       msg = 'Error: Failed to cancel jobs.%s' % (os.linesep)
