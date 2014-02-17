@@ -7,6 +7,10 @@ import argparse
 import traceback
 import binascii
 
+walltime_pattern = re.compile(r'^\d{1,2}$|^\d{1,2}:\d{1,2}$|^\d+:\d{1,2}:\d{1,2}$')
+memory_pattern = re.compile(r'^\d+[MG]$')
+jobtype_pattern = re.compile(r'^serial$|^serial:\d+$|^mpi:\d+$|^mpi:\d+:\d+$|^mpich:\d+$|^mpich:\d+:\d+$')
+
 h = {
   'account': 
     'account code this job is run under, e.g. uoa00042',
@@ -16,12 +20,10 @@ h = {
     'Base directory of the job where the job directory for this job will be created. ' +
     'The value of the parameter jobname postfixed with the current date and time will ' +
     'be used to create the job directory.',
-  'module':
-    'Module to be loaded prior to job execution. Multiple module parameters can be specified',
   'mem':
-    'Amount of memory [GigaBytes] required by this job.',
+    'Amount of memory required by this job.',
   'vmem':
-    'Amount of virtual memory [GigaBytes] required by this job. If not specified, ' +
+    'Amount of virtual memory required by this job. If not specified, ' +
     'the value of the parameter memorygb will be used.',
   'jobname':
     'Name of the job. The value of the parameter jobname postfixed with the current date and time will ' +
@@ -38,6 +40,47 @@ h = {
   'extension':
     'Additional scheduler directive',
 }
+
+def validate_walltime(walltime):
+  ''' validate walltime has been specified correctly '''
+  if not walltime_pattern.match(walltime):
+    raise Exception('walltime has not been specified correctly: %s' % walltime)
+
+def validate_memory(memory):
+  ''' validate memory has been specified correctly '''
+  if not memory_pattern.match(memory):
+    raise Exception('memory has not been specified correctly: %s' % memory)    
+
+def validate_jobtype(jobtype):
+  ''' validate jobtype has been specified correctly '''
+  if not jobtype_pattern.match(jobtype):
+    raise Exception('jobtype has not been specified correctly: %s' % jobtype)    
+
+def walltime_2_seconds(walltime):
+  s = 0
+  factor = 1
+  tokens = walltime.split(':')  
+  if tokens:
+    tokens.reverse()
+    for t in tokens:
+      s += factor * int(t)
+      factor *= 60
+  return s
+
+def seconds_2_walltime(value):
+  h = value / 3600
+  value %= 3600
+  m = value / 60
+  value %= 60
+  s = value
+  return '%s:%s:%s' % (str(h).zfill(2),str(m).zfill(2),str(s).zfill(2))
+
+def substract_15s(walltime):
+  s = walltime_2_seconds(walltime) - 15
+  if s < 0:
+    return '00:00:00'
+  else:
+    return seconds_2_walltime(s)
   
 def create_job_dir_name(basedir, jobname):
   # Fixme: handle potential whitespaces
@@ -51,21 +94,27 @@ def create_job_dir_name(basedir, jobname):
       raise Exception('Generation of unique job directory name failed')
   return jobdir
 
-def create_job_description(jobdir, cmds, modules, walltime, mem, vmem, jobtype, account):
+
+def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, account):
+  validate_walltime(walltime)
+  validate_memory(mem)
+  validate_memory(vmem)
+  validate_jobtype(jobtype)
+  
+  walltime_soft = substract_15s(walltime)
+  
   job_file = '%s%s.job.ll' % (jobdir, os.path.sep)
   f = open(job_file, "w+")
   f.write('#@ shell = /bin/bash%s' % os.linesep)
   f.write('#@ class = default%s' % os.linesep)
+  f.write('#@ account_no = %s%s' % (account, os.linesep))
   f.write('#@ group = nesi%s' % os.linesep)
+  f.write('#@ initialdir = %s%s' % (jobdir, os.linesep))
   f.write('#@ output = stdout.txt%s' % os.linesep)
   f.write('#@ error = stderr.txt%s' % os.linesep)
-  f.write('#@ initialdir = %s%s' % (jobdir, os.linesep))
   f.write('#@ environment = COPY_ALL%s' % os.linesep)
-  f.write('#@ wall_clock_limit = %s%s' % (walltime, os.linesep))
+  f.write('#@ wall_clock_limit = %s,%s%s' % (walltime, walltime_soft, os.linesep))
 
-  if account:
-    f.write('#@ account_no = %s%s' % (account, os.linesep))
-    
   mem_value = int(mem[0:-1])
   mem_unit = mem[-1]
   mem_factor = 1024
@@ -79,52 +128,41 @@ def create_job_description(jobdir, cmds, modules, walltime, mem, vmem, jobtype, 
   elif mem_unit == 'G':
     mem_string = '%sgb' % mem_value
     mem_factor *= 1024
-  else:
-    raise Exception("Invalid memory specification: %s" % mem)
 
   if vmem_unit == 'M':
     vmem_string = '%smb' % vmem_value
   elif vmem_unit == 'G':
     vmem_string = '%sgb' % vmem_value
     vmem_factor *= 1024
-  else:
-    raise Exception("Invalid virtual memory specification: %s" % vmem)
    
   f.write('#@ resources = ConsumableMemory(%s) ConsumableVirtualMemory(%s)%s' % (mem_string, vmem_string, os.linesep))
   
   # Determine serial, mpi, mpich etc
   tokens = jobtype.split(':')
-  if tokens[0] != 'serial' and tokens[0] != 'mpi' and tokens[0] != 'mpich':
-    raise Exception("Job type must be either serial or mpi")
   if tokens[0] == 'serial':
     f.write('#@ job_type = serial%s' % os.linesep)
     if len(tokens) == 2:
       f.write('#@ parallel_threads = %s%s' % (tokens[1], os.linesep))      
   elif tokens[0] == 'mpi':
     f.write('#@ job_type = parallel%s' % os.linesep)
-    if len(tokens) < 2:
-      raise Exception('Number of tasks not specified')
     f.write('#@ total_tasks = %s%s' % (tokens[1], os.linesep))      
+    f.write('#@ blocking = unlimited%s' % os.linesep)
     if len(tokens) == 3:
       f.write('#@ parallel_threads = %s%s' % (tokens[2], os.linesep))      
-    f.write('#@ blocking = unlimited%s' % os.linesep)
   else:
     f.write('#@ job_type = mpich%s' % os.linesep)
-    if len(tokens) < 2:
-      raise Exception('Number of tasks not specified')
     f.write('#@ total_tasks = %s%s' % (tokens[1], os.linesep))      
+    f.write('#@ blocking = unlimited%s' % os.linesep)
     if len(tokens) == 3:
       f.write('#@ parallel_threads = %s%s' % (tokens[2], os.linesep)) 
-    f.write('#@ blocking = unlimited%s' % os.linesep)
   
   f.write('#@ queue%s' % os.linesep)
 
   f.write('%s' % os.linesep)
-
+  # trap signal sent when walltime soft limit has been exceeded
+  f.write('trap \'echo "Walltime limit exceeded. Job will be terminated shortly." >&2\' SIGXCPU%s' % os.linesep)
+  
   f.write('ulimit -m %s -v %s%s' % (mem_value*mem_factor, vmem_value*vmem_factor, os.linesep))
-  if modules:
-    for module in modules:
-      f.write('module load %s%s' % (module, os.linesep))
   for cmd in cmds:
     f.write('%s%s' % (cmd, os.linesep))
   f.close()
@@ -134,7 +172,6 @@ parser = argparse.ArgumentParser(description='')
 parser.add_argument('-a','--account', help=h['account'], required=False, type=str)
 parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
 parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str)
-parser.add_argument('-e','--module', help=h['module'], required=False, type=str, action='append')
 parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
 parser.add_argument('-m','--mem', help=h['mem'], required=True, type=str)
 parser.add_argument('-n','--jobname', help=h['jobname'], required=False, type=str, default='job')
@@ -156,16 +193,14 @@ try:
   os.makedirs(jobdir)
 except:
   print >> sys.stderr, 'Error: Creation of job directory %s failed.' % jobdir
-  print >> sys.stderr, 'Details:'
   print >> sys.stderr, traceback.format_exc()
   sys.exit(1)
 
 # Create job description
 try:
-  jobfile = create_job_description(jobdir, args.cmd, args.module, args.walltime, args.mem, args.vmem, args.jobtype, args.account)
+  jobfile = create_job_description(jobdir, args.cmd, args.walltime, args.mem, args.vmem, args.jobtype, args.account)
   print '%s,%s' % (jobdir, jobfile)
 except:
   print >> sys.stderr, 'Error: Creation of job description failed.'
-  print >> sys.stderr, 'Details:'
   print >> sys.stderr, traceback.format_exc()
   sys.exit(1)
