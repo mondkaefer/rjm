@@ -13,17 +13,10 @@ from logging.handlers import MemoryHandler
 from datetime import datetime
 from subprocess import Popen, PIPE
 
-# name of the configuration directory
-CONFIG_DIR_NAME = '.remote_jobs'
-# name of the configuration file
-CONFIG_FILE_NAME = 'config.ini'
-# name of the private SSH key
-SSH_PRIV_KEY = 'auckland_pan_cluster'
-
 # default logging configuration
 FORMAT = '%(asctime)s|%(levelname)-8s|%(message)s'
 LOGGER = logging.getLogger('RJM')
-DEFAULT_LOG_LEVEL='WARN'
+DEFAULT_LOG_LEVEL='INFO'
 LOGGER.setLevel(eval("logging.%s" % DEFAULT_LOG_LEVEL))
 handler = StreamHandler() 
 handler.setFormatter(logging.Formatter(FORMAT))
@@ -35,56 +28,6 @@ def platform_is_windows():
     return True
   else:
     return False
-
-def get_config_dir():
-  ''' get the absolute path of the configuration directory. '''
-  if platform_is_windows():
-    directory = '%s%s%s' % (os.environ['USERPROFILE'], os.path.sep, CONFIG_DIR_NAME)
-  else:
-    directory = '%s%s%s' % (os.environ['HOME'], os.path.sep, CONFIG_DIR_NAME)
-  return directory
-
-def get_config_file():
-  ''' get the absolute path of the configuration file. '''
-  return '%s%s%s' % (get_config_dir(), os.path.sep, CONFIG_FILE_NAME)
-
-def get_priv_ssh_key():
-  ''' get the absolute path of the private ssh key. '''
-  return '%s%s%s' % (get_config_dir(), os.path.sep, SSH_PRIV_KEY)
-  
-def get_pub_ssh_key():
-  ''' get the absolute path of the public ssh key. '''
-  return '%s%s%s.pub' % (get_config_dir(), os.path.sep, SSH_PRIV_KEY)
-  
-def get_config_parser():
-  ''' get a ConfigParser object of the configuration file. '''
-  parser = ConfigParser.SafeConfigParser();
-  parser.read(get_config_file())
-  return parser
-
-def create_config_dir():
-  ''' create the configuration directory.
-      if the directory does not yet exist, it will be created.
-  '''
-  config_dir = get_config_dir()
-  if not os.path.exists(config_dir):
-    os.mkdir(config_dir)
-  else:
-    if not os.path.isdir(config_dir):
-      raise Exception('unexpected error: %s already exists and is not a directory.' % config_dir)
-  
-def create_config_file(host, user, fingerprint):
-  ''' create the configuration file.
-      if the configuration directory does not exist, it will be created.
-  '''
-  create_config_dir()
-  f = open(get_config_file(), "w+")
-  f.write('[MAIN]%s' % os.linesep)
-  f.write('remote_host=%s%s' % (host, os.linesep))
-  f.write('remote_user=%s%s' % (user, os.linesep))
-  f.write('ssh_priv_key_file=%s%s' % (get_priv_ssh_key(), os.linesep))
-  f.write('ssh_fingerprint=%s%s' % (fingerprint, os.linesep))
-  f.close()
 
 def run(command_and_args, error_on_stderr=True, error_on_nonzero_rc=True):
   ''' run a local system call 
@@ -127,9 +70,10 @@ class Retry(object):
       the time to sleep is randomly determined from the interval [min, max] specified in mm.
       give up after max_attempts.
   '''
-  def __init__(self, max_attempts, mm):
-    self.max_attempts = max_attempts
-    self.mm = mm
+  def __init__(self, max_attempts, min_wait_s, max_wait_s):
+    self.max_attempts = int(max_attempts)
+    self.min_wait_s = float(min_wait_s)
+    self.max_wait_s = float(max_wait_s)
     self.log = get_log()
 
   def __call__(self, f):
@@ -141,7 +85,7 @@ class Retry(object):
           if i < self.max_attempts:
             self.log.warn("attempt #%s to call function '%s' with parameters %s failed. %s" %
                           (i, f.__name__, str(args), traceback.format_exc().strip()))
-            time.sleep(random.uniform(self.mm[0], self.mm[1]))
+            time.sleep(random.uniform(self.min_wait_s, self.max_wait_s))
           else:
             self.log.error("attempt #%s to call function '%s' with parameters %s failed. giving up. %s" %
                            (i, f.__name__, str(args), traceback.format_exc().strip()))
@@ -173,3 +117,14 @@ def read_lines_from_file(filename):
       if line:
         lines.append(line.strip())
   return lines
+
+def get_local_job_directories(localjobdirfile):
+  ''' get the list of local job directories from file. '''
+  localdirs = []
+  localdirstmp = read_lines_from_file(localjobdirfile)
+  for localdir in localdirstmp:
+    if os.path.exists(localdir):
+      localdirs.append(localdir)
+    else:
+      get_log().warn('local job directory does not exist: %s. Skipping.' % localdir)
+  return localdirs
