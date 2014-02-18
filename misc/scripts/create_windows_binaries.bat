@@ -1,3 +1,4 @@
+REM This script has to be invoked in the top directory of the git repository
 cd client\lib
 python setup.py install
 python setup.py install
