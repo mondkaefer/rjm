@@ -88,9 +88,9 @@ print_underscored('Creating SSH key pair')
 print 'The passphrase for the private key must'
 print ' * be at least 8 characters in length'
 print ' * contain numbers'
-print ' * contain at least one upper case letter'
-print ' * contain at least one lower case letter'
-print ' * contain at least one punctuation symbol (%s)' % string.punctuation
+print ' * contain at least one upper-case letter'
+print ' * contain at least one lower-case letter'
+# print ' * contain at least one punctuation symbol (%s)' % string.punctuation
 
 while True:
   passphrase1 = read_passphrase()
