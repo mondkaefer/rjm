@@ -11,7 +11,7 @@ CONFIG_FILE_NAME = 'config.ini'
 # default remote host
 DEFAULT_REMOTE_HOST = 'login.uoa.nesi.org.nz'
 # Name of the file that contains the list of files to be uploaded before the job starts
-INPUT_FILES_FILE = 'gridfiles_out.txt'
+INPUT_FILES_FILE = 'gridfiles_in.txt'
 # Name of the file that contains the list of files to be downloaded after the job is done
 OUTPUT_FILES_FILE = 'gridfiles_out.txt'
 
