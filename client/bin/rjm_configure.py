@@ -34,14 +34,14 @@ def read_passphrase():
     return False
 
   # verify existence of punctuation
-  found = False
-  for p in string.punctuation:
-    if p in passphrase:
-      found = True
-      break
-  if not found:
-    print "Passphrase must contain at least one punctuation (%s)." % string.punctuation
-    return False
+  #found = False
+  #for p in string.punctuation:
+  #  if p in passphrase:
+  #    found = True
+  #    break
+  #if not found:
+  #  print "Passphrase must contain at least one punctuation (%s)." % string.punctuation
+  #  return False
   
   return passphrase
 
