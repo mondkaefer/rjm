@@ -11,9 +11,9 @@ CONFIG_FILE_NAME = 'config.ini'
 # default remote host
 DEFAULT_REMOTE_HOST = 'login.uoa.nesi.org.nz'
 # Name of the file that contains the list of files to be uploaded before the job starts
-INPUT_FILES_FILE = 'gridfiles_in.txt'
+DEFAULT_UPLOAD = 'rjm_uploads.txt'
 # Name of the file that contains the list of files to be downloaded after the job is done
-OUTPUT_FILES_FILE = 'gridfiles_out.txt'
+DEFAULT_DOWNLOAD = 'rjm_downloads.txt'
 
 class ConfigReader(ConfigParser.ConfigParser):
   def as_dict(self):
@@ -61,7 +61,7 @@ def create_config_dir():
     if not os.path.isdir(config_dir):
       raise Exception('unexpected error: %s already exists and is not a directory.' % config_dir)
   
-def create_config_file(host, user, fingerprint, default_account, default_remote_base_directory):
+def create_config_file(host, user, fingerprint, default_account, default_remote_base_directory, rjm_upload, rjm_download):
   ''' create the configuration file.
       if the configuration directory does not exist, it will be created.
   '''
@@ -79,6 +79,10 @@ def create_config_file(host, user, fingerprint, default_account, default_remote_
   f.write('remote_is_job_done=%s%s' % ('/share/apps/remoteapi/0.2/is_job_done', os.linesep))
   f.write('remote_get_job_statuses=%s%s' % ('/share/apps/remoteapi/0.2/get_job_statuses', os.linesep))
   f.write('remote_cancel_jobs=%s%s' % ('/share/apps/remoteapi/0.2/cancel_jobs', os.linesep))
+  f.write('%s' % os.linesep)
+  f.write('[FILE_TRANSFER]%s' % os.linesep)
+  f.write('uploads_file=%s%s' % (rjm_upload, os.linesep))
+  f.write('downloads_file=%s%s' % (rjm_download, os.linesep))
   f.write('%s' % os.linesep)
   f.write('[RETRY]%s' % os.linesep)
   f.write('max_attempts=%s%s' % ('5', os.linesep))

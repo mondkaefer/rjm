@@ -1,6 +1,5 @@
 import os
 import re
-import string
 import getpass
 import cer.client.util.config as config
 import cer.client.ssh as ssh
@@ -46,10 +45,12 @@ def read_passphrase():
   return passphrase
 
 def read_config_file_input():
-  host = raw_input("Name of login node [login.uoa.nesi.org.nz]: ").strip()
+  host = raw_input("Name of cluster login node [%s]: " % config.DEFAULT_REMOTE_HOST).strip()
+  if not host:
+    host = config.DEFAULT_REMOTE_HOST
 
   while True:
-    user = raw_input("Your cluster account name (UPI): ").strip()
+    user = raw_input("Your cluster account (UPI): ").strip()
     if user:
       break
     else:
@@ -66,11 +67,16 @@ def read_config_file_input():
   default_remote_base_directory = raw_input("Default remote base job directory [%s]: " % suggestion).strip()
   if not default_remote_base_directory:
     default_remote_base_directory = suggestion
+
+  uploads_file = raw_input("Name of file in each job directory to specify files to be uploaded [%s]: " % config.DEFAULT_UPLOAD).strip()
+  if not uploads_file:
+    uploads_file = config.DEFAULT_UPLOAD
     
-  if not host:
-    host = config.DEFAULT_REMOTE_HOST
+  downloads_file = raw_input("Name of file in each job directory to specify files to be downloaded [%s]: " % config.DEFAULT_DOWNLOAD).strip()
+  if not downloads_file:
+    downloads_file = config.DEFAULT_DOWNLOAD
   
-  return (host, user, default_account, default_remote_base_directory)
+  return (host, user, default_account, default_remote_base_directory, uploads_file, downloads_file)
 
 passphrase1 = None
 passphrase2 = None
@@ -98,7 +104,7 @@ while True:
     break
   
 while True:
-  passphrase2 = getpass.getpass(prompt='%sPlease repeat passphrase: ' % os.linesep)
+  passphrase2 = getpass.getpass(prompt='Repeat passphrase: ')
   if passphrase1 == passphrase2:
     break
   else:
@@ -110,8 +116,8 @@ fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)
 
 print ''
 print_underscored('Creating configuration file. Need some information.')
-host, user, default_account, default_remote_base_directory = read_config_file_input()
-config.create_config_file(host, user, fingerprint, default_account, default_remote_base_directory)
+host, user, default_account, default_remote_base_directory, uploads_file, downloads_file = read_config_file_input()
+config.create_config_file(host, user, fingerprint, default_account, default_remote_base_directory, uploads_file, downloads_file)
 
 print ''
 print_underscored('Uploading public key to login node')

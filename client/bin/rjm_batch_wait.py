@@ -46,33 +46,30 @@ log = util.get_log()
 # read central configuration file
 try:
   conf = config.get_config()
-  cluster = conf['CLUSTER']
-  retry = conf['RETRY']
 except:
   log.critical('failed to read config file %s' % config.get_config_file())
   cleanup()
   sys.exit(1)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def get_local_job_directories(localjobdirfile):
   ''' get the list of local job directories from file. '''
   return util.get_local_job_directories(localjobdirfile)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def read_job_config_file(job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
   return config.read_job_config_file(job_config_file)
   
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def stage_out_file(sftp, remotefile, localfile):
   ''' download an individual file. '''
   log.debug('downloading remote file %s to local file %s' % (remotefile, localfile))
   sftp.get(remotefile, localfile)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
-def get_outputfile_names(localdir, remotedir):
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
+def get_outputfile_names(files_out, remotedir):
   ''' get the full path of the remote files to be downloaded after a job is done '''
-  files_out = '%s%s%s' % (localdir,os.path.sep,config.OUTPUT_FILES_FILE)
   filenames = []
   if os.path.isfile(files_out):
     filenamestmp = util.read_lines_from_file(files_out)
@@ -80,7 +77,7 @@ def get_outputfile_names(localdir, remotedir):
   return filenames
   
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def rename_file(old, new):
   ''' rename a file.
       note, that on Windows os.rename() causes an exception if the new file already exists.
@@ -93,16 +90,17 @@ def rename_file(old, new):
   if not os.path.isfile(new):
     raise Exception('renaming file %s to %s failed.' % (old, new))
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def create_or_update_job_config_file(localdir, props_dict):
   ''' create metadata file for job in local job directory (ini-format) '''
   config.create_or_update_job_config_file(localdir, props_dict)
 
-def stage_out(sftp, localdir, remotedir):
+def stage_out(sftp, localdir, remotedir, downloads_file):
   ''' download all files for this job, if they have not already been downloaded '''
   job_config = read_job_config_file('%s%s.job.ini' % (localdir, os.path.sep))
   if not eval(job_config['JOB']['download_done']):
-    remotefiles = get_outputfile_names(localdir, remotedir)
+    files_out = '%s%s%s' % (localdir, os.path.sep, downloads_file)
+    remotefiles = get_outputfile_names(files_out, remotedir)
     log.debug('files to download: %s' % str(remotefiles))
     if remotefiles:
       for remotefile in remotefiles:
@@ -153,14 +151,14 @@ while True:
   try:
     log.info('checking for job status of %s jobs...' % len(jobs))
     jobs_new = {}
-    ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
+    ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
     log.debug('getting job statuses')
     jobmap = job.get_job_statuses(ssh_conn)
     for job_id in jobs.keys():
       if job_id not in jobmap:
         log.info('job %s finished.' % jobs[job_id]['local_directory'])
         try:
-          stage_out(ssh_conn.open_sftp(), jobs[job_id]['local_directory'], jobs[job_id]['remote_directory'])
+          stage_out(ssh_conn.open_sftp(), jobs[job_id]['local_directory'], jobs[job_id]['remote_directory'], conf['FILE_TRANSFER']['downloads_file'])
         except:
           log.warn('failed to download or rename some of the result files for job into %s' % jobs[job_id]['local_directory'])
       else:

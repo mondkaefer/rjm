@@ -72,20 +72,18 @@ ssh_conn = None
 # read central configuration file
 try:
   conf = config.get_config()
-  cluster = conf['CLUSTER']
-  retry = conf['RETRY']
 except:
   log.critical('failed to read config file %s' % config.get_config_file())
   log.critical(traceback.format_exc())
   cleanup()
   sys.exit(1)
   
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def get_local_job_directories(localjobdirfile):
   ''' get the list of local job directories from file. '''
   return util.get_local_job_directories(localjobdirfile)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def prepare_job(ssh_conn, args):
   ''' create remote job directory and job description file. '''
   log.debug('Creating job directory...')
@@ -94,26 +92,25 @@ def prepare_job(ssh_conn, args):
   log.debug('Remote job directory: %s' % remote_jobdir)
   return (remote_jobdir, remote_job_desc_file)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def stage_in_file(localfile, remotefile):
   ''' upload individual input file. '''
   log.debug('Uploading local file %s to remote file %s' % (localfile, remotefile))
   sftp.put(localfile, remotefile)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
-def get_inputfile_names(localdir):
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
+def get_inputfile_names(uploads_file):
   ''' get the names of the local files to be uploaded prior to starting the job. '''  
-  files_in = '%s%s%s' % (localdir, os.path.sep, config.INPUT_FILES_FILE)
   filenames = []
-  if os.path.isfile(files_in):
-    filenamestmp = util.read_lines_from_file(files_in)
+  if os.path.isfile(uploads_file):
+    filenamestmp = util.read_lines_from_file(uploads_file)
     for name in filenamestmp:
       if not os.path.isabs(name):
         name = '%s%s%s' % (localdir, os.path.sep, name)
         filenames.append(name)
   return filenames
   
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def submit_job(ssh_conn, remote_job_desc_file):
   ''' submit a job. '''
   log.debug('Submitting job...')
@@ -122,14 +119,14 @@ def submit_job(ssh_conn, remote_job_desc_file):
   log.debug('Job ID: %s' % jobid)
   return jobid
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def create_or_update_job_config_file(localdir, props_dict):
   ''' create metadata file for job in local job directory (ini-format) '''
   config.create_or_update_job_config_file(localdir, props_dict)
 
-def stage_in(sftp, localdir, remotedir):
+def stage_in(sftp, uploads_file, remotedir):
   ''' upload all input files, if any. '''
-  localfiles = get_inputfile_names(localdir)
+  localfiles = get_inputfile_names(uploads_file)
   log.debug('files to upload: %s' % str(localfiles))
   for localfile in localfiles:
     remotefile = '%s/%s' % (remotedir, os.path.basename(localfile))
@@ -146,15 +143,15 @@ except:
     
 # set up SSH connection
 try:
-  ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
+  ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
 except:
   log.critical('Failed to set up SSH connection')
   cleanup()
   sys.exit(1)
 
 args.vmem = args.mem if not args.vmem else args.vmem
-args.account = cluster['default_account'] if not args.account else args.account
-args.remotebasedir = cluster['default_remote_base_directory'] if not args.remotebasedir else args.remotebasedir
+args.account = conf['CLUSTER']['default_account'] if not args.account else args.account
+args.remotebasedir = conf['CLUSTER']['default_remote_base_directory'] if not args.remotebasedir else args.remotebasedir
 
 sftp = ssh_conn.open_sftp()
 
@@ -165,7 +162,8 @@ for localdir in localdirs:
     args.jobname = os.path.basename(localdir)
     remote_jobdir, remote_job_desc_file = prepare_job(ssh_conn, args)
     create_or_update_job_config_file(localdir, { 'JOB': { 'remote_directory': remote_jobdir, 'download_done': False } })
-    stage_in(sftp, localdir, remote_jobdir)
+    uploads_file = '%s%s%s' % (localdir, os.path.sep, conf['FILE_TRANSFER']['uploads_file'])
+    stage_in(sftp, uploads_file, remote_jobdir)
     jobid = submit_job(ssh_conn, remote_job_desc_file)
     create_or_update_job_config_file(localdir, { 'JOB': { 'id': jobid } })
   except:
