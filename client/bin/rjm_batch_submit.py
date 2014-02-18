@@ -19,36 +19,35 @@ def cleanup():
 # information displayed as help by argparse
 h = {
   'account':
-    'Account code this job is run under, e.g. uoa00042, ' +
-    'If not account is specified, the default account as specified in %s is used.' % config.get_config_file(),
+    'account/project code this job is run under, e.g. uoa00042, ' +
+    'if no account is specified, the default account as specified in %s is used.' % config.get_config_file(),
   'cmd': 
-    'Command to run.',
+    'command to run. multiple commands can be specified, and they will be executed one after the other as part ' +
+    'of the same job',
   'remotebasedir':
-    'Remote base directory where the individual job directories for each job will be created. ' +
-    'If no remote base directory is specified, the default remote base directory as specified in %s is used.' % config.get_config_file(),
+    'remote base directory where the individual job directories for each job will be created. ' +
+    'if no remote base directory is specified, the default remote base directory as specified in %s is used.' % config.get_config_file(),
   'mem':
-    'Amount of memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
+    'amount of memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
     'indicating megabytes, gigabytes',
   'vmem':
-    'Amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
+    'amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
     'indicating megabytes, gigabytes',
-  'jobname':
-    'Name of the job. The value of the parameter job name postfixed with the current date and time will ' +
-    'be used to create the job directory. If no job name is given, the job name is "job"',
   'jobtype':
-    'Type of the job. The number of processes and threads is specified separated by colons. ' +
+    'type of the job. the number of processes and threads is specified separated by colons. ' +
     'For serial/multi-threaded jobs: serial:<#threads>. ' +
-    'For MPI jobs: mpi:<#processes>[:<#threads>]. ' +
+    'For mpi jobs: mpi:<#processes>[:<#threads>]. ' +
     'Examples: serial, serial:5, mpi:4, mpi:5:4, mpich:6',
   'walltime':
-    'Wall clock time this job will run for, specified in hours, minutes and seconds in format h[h*]:m[m]:s[s]. ' +
-    'Examples: 24:0:0, 0:10:0, 6:0:0, 240:10:3',
-  'localjobdirfile':
-    'File that contains the names of the local job directories, one name per line.',
+    'wall clock time this job will run for, specified in hours, minutes and seconds in format h[h*]:m[m]:s[s]. ' +
+    'examples: 24:0:0, 0:10:0, 6:0:0, 240:10:3',
   'logfile':
-    'Logfile. If not specified, all messages will be printed to stdout', 
+    'logfile. if not specified, all messages will be printed to the terminal.', 
   'loglevel':
-    'Loglevel. Default: %s' % util.DEFAULT_LOG_LEVEL.lower(),
+    'level of log verbosity. default: %s. ' % util.DEFAULT_LOG_LEVEL.lower() +
+    'the higher the log level, more information will be printed.',
+  'localjobdirfile':
+    'file that contains the names of the local job directories, one name per line.',
 }
 
 parser = argparse.ArgumentParser(description='')

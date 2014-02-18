@@ -22,16 +22,17 @@ sftp_conn = None
 # information displayed as help by argparse
 h = {
   'logfile':
-    'Logfile. If not specified, all messages will be printed to stdout.', 
+    'logfile. if not specified, all messages will be printed to the terminal.', 
   'loglevel':
-    'Loglevel. Default: %s' % util.DEFAULT_LOG_LEVEL.lower(),
+    'level of log verbosity. default: %s. ' % util.DEFAULT_LOG_LEVEL.lower() +
+    'the higher the log level, more information will be printed.',
   'localjobdirfile':
-    'File that contains the names of the local job directories, one name per line.',
+    'file that contains the names of the local job directories, one name per line.',
   'pollingintervalsec':
-    'Number of seconds to wait between polling for job status.',
+    'number of seconds to wait between attempts to poll for job status.',
 }
 
-parser = argparse.ArgumentParser(description='')
+parser = argparse.ArgumentParser(description='wait for all jobs of the batch to finish and download results.')
 parser.add_argument('-f','--localjobdirfile', help=h['localjobdirfile'], required=True, type=str)
 parser.add_argument('-l','--logfile', help=h['logfile'], required=False, type=str)
 parser.add_argument('-ll','--loglevel', help=h['loglevel'], required=False, type=str, choices=['debug','info','warn','error','critical'])
