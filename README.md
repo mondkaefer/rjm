@@ -8,11 +8,9 @@ All commands are issued over a single SSH connection to achieve robustness and s
 
 Born out of frustration with notoriously unreliable and non-scaling Grid Middleware stacks.
 
-Documentation:
-
+**Documentation**:
 https://wiki.auckland.ac.nz/display/CER/Lightweight+Remote+Job+Management
 
-Note:
-
+**Note**:
 This is not yet a general-purpose tool, but tailored for researchers using the Auckland NeSI cluster.
 The batch scheduling system in use is LoadLeveler.
