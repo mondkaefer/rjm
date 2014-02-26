@@ -29,7 +29,7 @@
 					<Component Id='toolkit_env_var' Guid='$(var.TOOLKIT_ENV_VAR_GUID)'>
 						<CreateFolder />
 						<Environment Id='ToolkitEnvVar' Name='CER_TOOLKIT_PATH'
-							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR]' />
+							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR];[INSTALLDIR]\rjm' />
 					</Component>
 					<Directory Id='RjmDir' Name='rjm'>
   					<Component Id='rjm_readme' Guid='$(var.README_GUID)'>
