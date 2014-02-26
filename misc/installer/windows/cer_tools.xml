@@ -31,7 +31,7 @@
 					<Component Id='toolkit_env_var' Guid='$(var.TOOLKIT_ENV_VAR_GUID)'>
 						<CreateFolder />
 						<Environment Id='ToolkitEnvVar' Name='CER_TOOLKIT_PATH'
-							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR];[INSTALLDIR]\rjm' />
+							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR]' />
 					</Component>
   				<Component Id='pageant' Guid='$(var.PAGEANT_GUID)'>
 	  			  <File Id='pageant_exe' DiskId='1' KeyPath='yes'
@@ -41,36 +41,34 @@
 	  			  <File Id='puttygen_exe' DiskId='1' KeyPath='yes'
 		  			  Source='!(bindpath.deps_path)\puttygen.exe' />
 		  		</Component>
-					<Directory Id='RjmDir' Name='rjm'>
-  					<Component Id='rjm_readme' Guid='$(var.README_GUID)'>
-	  					<File Id='rjm_readme_txt' DiskId='1' KeyPath='yes'
-		  					Source='!(bindpath.doc_path)\readme.txt' />
-		  			</Component>
-						<Component Id='rjm_configure' Guid='$(var.RJM_CONFIGURE_GUID)'>
-							<File Id='rjm_configure_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_configure.exe' />
-						</Component>
-						<Component Id='rjm_authenticate' Guid='$(var.RJM_AUTHENTICATE_GUID)'>
-							<File Id='rjm_authenticate_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_authenticate.exe' />
-						</Component>
-						<Component Id='rjm_batch_cancel' Guid='$(var.RJM_BATCH_CANCEL_GUID)'>
-							<File Id='rjm_batch_cancel_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_batch_cancel.exe' />
-						</Component>
-						<Component Id='rjm_batch_clean' Guid='$(var.RJM_BATCH_CLEAN_GUID)'>
-							<File Id='rjm_batch_clean_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_batch_clean.exe' />
-						</Component>
-						<Component Id='rjm_batch_submit' Guid='$(var.RJM_BATCH_SUBMIT_GUID)'>
-							<File Id='rjm_batch_submit_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_batch_submit.exe' />
-						</Component>
-						<Component Id='rjm_batch_wait' Guid='$(var.RJM_BATCH_WAIT_GUID)'>
-							<File Id='rjm_batch_wait_exe' DiskId='1' KeyPath='yes'
-								Source='!(bindpath.exe_path)\rjm_batch_wait.exe' />
-						</Component>
-					</Directory>
+  				<Component Id='rjm_readme' Guid='$(var.README_GUID)'>
+	  				<File Id='rjm_readme_txt' DiskId='1' KeyPath='yes'
+		  				Source='!(bindpath.doc_path)\readme.txt' />
+		  		</Component>
+					<Component Id='rjm_configure' Guid='$(var.RJM_CONFIGURE_GUID)'>
+						<File Id='rjm_configure_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_configure.exe' />
+					</Component>
+					<Component Id='rjm_authenticate' Guid='$(var.RJM_AUTHENTICATE_GUID)'>
+						<File Id='rjm_authenticate_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_authenticate.exe' />
+					</Component>
+					<Component Id='rjm_batch_cancel' Guid='$(var.RJM_BATCH_CANCEL_GUID)'>
+						<File Id='rjm_batch_cancel_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_batch_cancel.exe' />
+					</Component>
+					<Component Id='rjm_batch_clean' Guid='$(var.RJM_BATCH_CLEAN_GUID)'>
+						<File Id='rjm_batch_clean_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_batch_clean.exe' />
+					</Component>
+					<Component Id='rjm_batch_submit' Guid='$(var.RJM_BATCH_SUBMIT_GUID)'>
+						<File Id='rjm_batch_submit_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_batch_submit.exe' />
+					</Component>
+					<Component Id='rjm_batch_wait' Guid='$(var.RJM_BATCH_WAIT_GUID)'>
+						<File Id='rjm_batch_wait_exe' DiskId='1' KeyPath='yes'
+							Source='!(bindpath.exe_path)\rjm_batch_wait.exe' />
+					</Component>
 				</Directory>
 			</Directory>
 		</Directory>
