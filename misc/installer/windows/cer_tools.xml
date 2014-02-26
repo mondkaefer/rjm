@@ -2,7 +2,7 @@
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
   <?define PRODUCT_VERSION="1.0.0" ?>
-  <?define MANUFACTURER="Centre for eResearch" ?>
+  <?define MANUFACTURER="Centre for eResearch - University of Auckland" ?>
   <?define PRODUCT_NAME="$(var.MANUFACTURER) Toolkit" ?>
   <?define PRODUCT_SHORTCUT="CeRToolkit" ?>
   <?define UPGRADE_CODE="de9d8ee6-8449-4476-ab9e-5069c5f71720" ?>
@@ -15,7 +15,7 @@
   <?define RJM_BATCH_WAIT_GUID="36e43004-7004-4865-a6f6-7f6f2cf96381" ?>
   <?define TOOLKIT_ENV_VAR_GUID="eab62114-03b5-45c9-bc87-af4dfd559e84" ?>
 
-	<Product Name='Centre for eResearch Toolkit' Id='*' Language='1033'
+	<Product Name='$(var.PRODUCT_NAME)' Id='*' Language='1033'
 		Codepage='1252' Version='$(var.PRODUCT_VERSION)' Manufacturer='$(var.MANUFACTURER)'
 		UpgradeCode='$(var.UPGRADE_CODE)'>
 
