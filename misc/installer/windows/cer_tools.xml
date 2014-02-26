@@ -7,6 +7,8 @@
   <?define PRODUCT_SHORTCUT="CeRToolkit" ?>
   <?define UPGRADE_CODE="de9d8ee6-8449-4476-ab9e-5069c5f71720" ?>
   <?define README_GUID="4a2e445f-3f44-4403-9067-0bc23132db76" ?>
+  <?define PAGEANT_GUID="f9706b71-180e-4d33-8b26-1cf13afd8f5a" ?>
+  <?define PUTTYGEN_GUID="de35fa5b-fc47-43ea-b871-90bbc8936649" ?>
   <?define RJM_CONFIGURE_GUID="04fc1d50-2938-4470-abf4-347ec37e76f2" ?>
   <?define RJM_AUTHENTICATE_GUID="e3e85da3-3f97-4f89-b3b6-477816624e07" ?>
   <?define RJM_BATCH_CANCEL_GUID="365352ad-d7f5-4583-8ab6-9490633756e1" ?>
@@ -31,11 +33,11 @@
 						<Environment Id='ToolkitEnvVar' Name='CER_TOOLKIT_PATH'
 							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR];[INSTALLDIR]\rjm' />
 					</Component>
-  				<Component Id='pageant' Guid='$(var.README_GUID)'>
+  				<Component Id='pageant' Guid='$(var.PAGEANT_GUID)'>
 	  			  <File Id='pageant_exe' DiskId='1' KeyPath='yes'
 		  			  Source='!(bindpath.deps_path)\pageant.exe' />
 		  		</Component>
-  				<Component Id='puttygen' Guid='$(var.README_GUID)'>
+  				<Component Id='puttygen' Guid='$(var.PUTTYGEN_GUID)'>
 	  			  <File Id='puttygen_exe' DiskId='1' KeyPath='yes'
 		  			  Source='!(bindpath.deps_path)\puttygen.exe' />
 		  		</Component>
