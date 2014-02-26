@@ -31,6 +31,14 @@
 						<Environment Id='ToolkitEnvVar' Name='CER_TOOLKIT_PATH'
 							Action='set' Permanent='no' System='yes' Part='all' Value='[INSTALLDIR];[INSTALLDIR]\rjm' />
 					</Component>
+  				<Component Id='pageant' Guid='$(var.README_GUID)'>
+	  			  <File Id='pageant_exe' DiskId='1' KeyPath='yes'
+		  			  Source='!(bindpath.deps_path)\pageant.exe' />
+		  		</Component>
+  				<Component Id='puttygen' Guid='$(var.README_GUID)'>
+	  			  <File Id='puttygen_exe' DiskId='1' KeyPath='yes'
+		  			  Source='!(bindpath.deps_path)\puttygen.exe' />
+		  		</Component>
 					<Directory Id='RjmDir' Name='rjm'>
   					<Component Id='rjm_readme' Guid='$(var.README_GUID)'>
 	  					<File Id='rjm_readme_txt' DiskId='1' KeyPath='yes'
@@ -68,6 +76,8 @@
 		<Feature Id='Complete' Title='$(var.PRODUCT_NAME)' Display='expand'
 			Level='1' Description='The complete package.' ConfigurableDirectory='INSTALLDIR'>
 			<ComponentRef Id='toolkit_env_var' />
+			<ComponentRef Id='pageant' />
+			<ComponentRef Id='puttygen' />
 			<ComponentRef Id='rjm_readme' />
 			<ComponentRef Id='rjm_configure' />
 			<ComponentRef Id='rjm_authenticate' />
@@ -82,6 +92,8 @@
 		<UI>
 			<UIRef Id="WixUI_InstallDir" />
 			<UIRef Id="WixUI_ErrorProgressText" />
+			<!-- Avoid creating system restore point on Windows 7 (takes long) -->
+		  <Property Id="MSIFASTINSTALL" Value="1" />
 			<!-- Skip license dialog -->
 			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
 				Value="InstallDirDlg" Order="2">1</Publish>
