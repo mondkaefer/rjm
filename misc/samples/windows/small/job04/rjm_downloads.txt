@@ -1,3 +1,0 @@
-matrix_out.mat
-stdout.txt
-stderr.txt
