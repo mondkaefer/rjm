@@ -46,8 +46,11 @@ def get_pub_ssh_key():
   
 def get_config():
   ''' return the main configuration as dictionary. '''
+  configFile = get_config_file()
+  if not os.path.isfile(configFile):
+    raise Exception('configuration file %s does not exist.' % configFile)
   cr = ConfigReader();
-  cr.read(get_config_file())
+  cr.read(configFile)
   return cr.as_dict()
 
 def create_config_dir():
