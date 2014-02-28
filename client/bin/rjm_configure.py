@@ -101,11 +101,15 @@ if os.path.isfile(config.get_pub_ssh_key()):
 print ''
 print_underscored('Creating SSH key pair')
 print 'The passphrase for the private key must'
-print ' * be at least 8 characters in length'
-print ' * contain numbers'
-print ' * contain at least one upper-case letter'
-print ' * contain at least one lower-case letter'
-# print ' * contain at least one punctuation symbol (%s)' % string.punctuation
+print ' * be at least %s characters in length' % PASSPHRASE_CHECKS['min_length']
+if 'contains_digit' in PASSPHRASE_CHECKS:
+  print ' * contain numbers'
+if 'contains_uppercase' in PASSPHRASE_CHECKS:
+  print ' * contain at least one upper-case letter'
+if 'contains_lowercase' in PASSPHRASE_CHECKS:
+  print ' * contain at least one lower-case letter'
+if 'contains_punctuation' in PASSPHRASE_CHECKS:
+  print ' * contain at least one punctuation symbol (%s)' % string.punctuation
 
 while True:
   passphrase1 = read_passphrase()
