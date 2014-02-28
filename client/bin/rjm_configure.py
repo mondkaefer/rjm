@@ -1,8 +1,17 @@
 import os
 import re
+import string
 import getpass
 import cer.client.util.config as config
 import cer.client.ssh as ssh
+
+PASSPHRASE_CHECKS = {
+ 'min_length': 8,
+ 'contains_uppercase': True,
+ 'contains_lowercase': True,
+ 'contains_digit': True,
+ 'contains_punctuation': True,
+}
 
 def print_underscored(msg):
   print msg
@@ -12,35 +21,35 @@ def read_passphrase():
   passphrase = getpass.getpass(prompt='%sPassphrase for private key: ' % os.linesep)
   
   # check length
-  if len(passphrase) < 8:
+  if len(passphrase) < PASSPHRASE_CHECKS['min_length']:
     print "Passphrase must be at least 8 characters long."
     return False
 
   # verify existence of lower-case letter
-  if passphrase == passphrase.upper():
+  if PASSPHRASE_CHECKS['contains_lowercase'] and (passphrase == passphrase.upper()):
     print "Passphrase must contain at least one lower-case letter."
     return False
     
   # verify existence of upper-case letter
-  if passphrase == passphrase.lower():
+  if PASSPHRASE_CHECKS['contains_uppercase'] and (passphrase == passphrase.lower()):
     print "Passphrase must contain at least one upper-case letter."
     return False
     
   # verify existence of digits
-  _digits = re.compile('\d')
-  if not _digits.search(passphrase):
+  if PASSPHRASE_CHECKS['contains_digit'] and not re.compile('\d').search(passphrase):
     print "Passphrase must contain at least one digit."
     return False
 
   # verify existence of punctuation
-  #found = False
-  #for p in string.punctuation:
-  #  if p in passphrase:
-  #    found = True
-  #    break
-  #if not found:
-  #  print "Passphrase must contain at least one punctuation (%s)." % string.punctuation
-  #  return False
+  if PASSPHRASE_CHECKS['contains_punctuation']:
+    found = False
+    for p in string.punctuation:
+      if p in passphrase:
+        found = True
+        break
+    if not found:
+      print "Passphrase must contain at least one punctuation (%s)." % string.punctuation
+      return False
   
   return passphrase
 
@@ -50,21 +59,21 @@ def read_config_file_input():
     host = config.DEFAULT_REMOTE_HOST
 
   while True:
-    user = raw_input("Your cluster account (UPI): ").strip()
+    user = raw_input("Your cluster login name (UPI): ").strip()
     if user:
       break
     else:
-      print "Cluster account must not be empty"
+      print "Cluster login name (UPI) must not be empty"
 
   while True:
-    default_account = raw_input("Default account/project code: ").strip()
-    if default_account:
+    default_project_code = raw_input("Default project code: ").strip()
+    if default_project_code:
       break
     else:
-      print "Default account/project code must not be empty"
+      print "Default project code must not be empty"
 
-  suggestion = '/projects/%s/%s/rjm-jobs' % (default_account, user)
-  default_remote_base_directory = raw_input("Default remote base job directory [%s]: " % suggestion).strip()
+  suggestion = '/projects/%s/%s/rjm-jobs' % (default_project_code, user)
+  default_remote_base_directory = raw_input("Default remote directory [%s]: " % suggestion).strip()
   if not default_remote_base_directory:
     default_remote_base_directory = suggestion
 
@@ -76,7 +85,7 @@ def read_config_file_input():
   if not downloads_file:
     downloads_file = config.DEFAULT_DOWNLOAD
   
-  return (host, user, default_account, default_remote_base_directory, uploads_file, downloads_file)
+  return (host, user, default_project_code, default_remote_base_directory, uploads_file, downloads_file)
 
 passphrase1 = None
 passphrase2 = None
@@ -111,20 +120,20 @@ while True:
     print "Passphrases don't match."
   
 print ''
-print 'Generating SSH key pair. This may take a few seconds...'
+print 'Generating SSH key pair. This may take up to a minute to complete...'
 fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)
 
 print ''
 print_underscored('Creating configuration file. Need some information.')
-host, user, default_account, default_remote_base_directory, uploads_file, downloads_file = read_config_file_input()
-config.create_config_file(host, user, fingerprint, default_account, default_remote_base_directory, uploads_file, downloads_file)
+host, user, default_project_code, default_remote_base_directory, uploads_file, downloads_file = read_config_file_input()
+config.create_config_file(host, user, fingerprint, default_project_code, default_remote_base_directory, uploads_file, downloads_file)
 
 print ''
 print_underscored('Uploading public key to login node')
 f = open(config.get_pub_ssh_key(), "r")
 pubkey = f.read()
 f.close()
-uni_password = getpass.getpass(prompt='Enter you University password: ')
+uni_password = getpass.getpass(prompt='Enter the University Password which goes with your UPI: ')
 conn = ssh.open_connection_username_password(host, user, uni_password)
 authz_keys = '${HOME}/.ssh/authorized_keys'
 tmpfile = '${HOME}/.ssh/authorized_keys.tmp'
