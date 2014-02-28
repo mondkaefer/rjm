@@ -16,42 +16,45 @@ def cleanup():
     except:
       pass
 
-# information displayed as help by argparse
+# help information displayed by argparse
 h = {
-  'account':
-    'account/project code this job is run under, e.g. uoa00042, ' +
-    'if no account is specified, the default account as specified in %s is used.' % config.get_config_file(),
   'cmd': 
     'command to run. multiple commands can be specified, and they will be executed one after the other as part ' +
     'of the same job',
-  'remotebasedir':
-    'remote base directory where the individual job directories for each job will be created. ' +
-    'if no remote base directory is specified, the default remote base directory as specified in %s is used.' % config.get_config_file(),
-  'mem':
-    'amount of memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
-    'indicating megabytes, gigabytes',
-  'vmem':
-    'amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
-    'indicating megabytes, gigabytes',
   'jobtype':
     'type of the job. the number of processes and threads is specified separated by colons. ' +
     'For serial/multi-threaded jobs: serial:<#threads>. ' +
     'For mpi jobs: mpi:<#processes>[:<#threads>]. ' +
     'Examples: serial, serial:5, mpi:4, mpi:5:4, mpich:6',
-  'walltime':
-    'wall clock time this job will run for, specified in hours, minutes and seconds in format h[h*]:m[m]:s[s]. ' +
-    'examples: 24:0:0, 0:10:0, 6:0:0, 240:10:3',
+  'localjobdirfile':
+    'file that contains the names of the local job directories, one name per line.',
   'logfile':
     'logfile. if not specified, all messages will be printed to the terminal.', 
   'loglevel':
     'level of log verbosity. default: %s. ' % util.DEFAULT_LOG_LEVEL.lower() +
     'the higher the log level, more information will be printed.',
-  'localjobdirfile':
-    'file that contains the names of the local job directories, one name per line.',
+  'mem':
+    'amount of memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
+    'indicating megabytes, gigabytes. ' +
+    'examples: 500M, 3G',
+  'projectcode':
+    'project code this job will run under, e.g. uoa00042, ' +
+    'if no project code is specified, the default project code, as specified in %s, is used.' % config.get_config_file(),
+  'remotebasedir':
+    'remote base directory where the individual job directories for each job will be created. ' +
+    'if no remote base directory is specified, the default remote base directory as specified in %s is used.' % config.get_config_file(),
+  'vmem':
+    'amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
+    'indicating megabytes, gigabytes. ' +
+    'examples: 500M, 3G',
+  'walltime':
+    'wall clock time this job will run for, specified in hours(h), minutes(m) and seconds(s) in format h[h*]:m[m]:s[s]. ' +
+    'the job will be terminated if it has not finished after the specified duration. ' +
+    'examples: 24:0:0, 0:10:0, 6:0:0, 240:10:3',
 }
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument('-a','--account', help=h['account'], required=False, type=str)
+parser.add_argument('-p','--projectcode', help=h['projectcode'], required=False, type=str)
 parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
 parser.add_argument('-d','--remotebasedir', help=h['remotebasedir'], required=False, type=str)
 parser.add_argument('-f','--localjobdirfile', help=h['localjobdirfile'], required=True, type=str)
