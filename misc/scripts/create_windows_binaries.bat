@@ -1,7 +1,10 @@
-REM This script has to be invoked in the top directory of the git repository
+REM Create Windows binaries from Python modules
+REM This script must be invoked in the top directory of the git repository
+
 cd client\lib
 python setup.py install
 python setup.py install
+
 cd ..\..
 cd client\bin
 pyinstaller -F rjm_authenticate.py
