@@ -19,3 +19,4 @@ if [ "${rc}" != "0" ]; then
 fi
 
 jobid=$(echo $output | cut -d\" -f2)
+echo ${jobid}
