@@ -73,9 +73,9 @@ def read_config_file_input():
       print "Default project code must not be empty"
 
   suggestion = '/projects/%s/%s/rjm-jobs' % (default_project_code, user)
-  default_remote_base_directory = raw_input("Default remote directory [%s]: " % suggestion).strip()
-  if not default_remote_base_directory:
-    default_remote_base_directory = suggestion
+  default_remote_directory = raw_input("Default remote directory [%s]: " % suggestion).strip()
+  if not default_remote_directory:
+    default_remote_directory = suggestion
 
   uploads_file = raw_input("Name of file in each job directory to specify files to be uploaded [%s]: " % config.DEFAULT_UPLOAD).strip()
   if not uploads_file:
@@ -85,7 +85,7 @@ def read_config_file_input():
   if not downloads_file:
     downloads_file = config.DEFAULT_DOWNLOAD
   
-  return (host, user, default_project_code, default_remote_base_directory, uploads_file, downloads_file)
+  return (host, user, default_project_code, default_remote_directory, uploads_file, downloads_file)
 
 passphrase1 = None
 passphrase2 = None
@@ -129,8 +129,8 @@ fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)
 
 print ''
 print_underscored('Creating configuration file. Need some information.')
-host, user, default_project_code, default_remote_base_directory, uploads_file, downloads_file = read_config_file_input()
-config.create_config_file(host, user, fingerprint, default_project_code, default_remote_base_directory, uploads_file, downloads_file)
+host, user, default_project_code, default_remote_directory, uploads_file, downloads_file = read_config_file_input()
+config.create_config_file(host, user, fingerprint, default_project_code, default_remote_directory, uploads_file, downloads_file)
 
 print ''
 print_underscored('Uploading public key to login node')
