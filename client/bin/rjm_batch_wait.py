@@ -150,6 +150,7 @@ log.info('waiting for jobs to finish (polling every %s seconds)...' % args.polli
 while True:
   try:
     log.info('checking for job status of %s jobs...' % len(jobs))
+    error_occured = False
     jobs_new = {}
     ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
     log.debug('getting job statuses')
@@ -164,6 +165,7 @@ while True:
       else:
         jobs_new[job_id] = jobs[job_id]
   except:
+    error_occured = True
     log.warn('failed to get status. only critical if happens repeatedly. %s' % traceback.format_exc().strip())
   finally:
     try:
@@ -172,9 +174,11 @@ while True:
       pass
     
   if len(jobs_new) > 0:
-    time.sleep(args.pollingintervalsec)
     jobs = jobs_new
   else:
-    break
-
+    if not error_occured:
+      break
+  
+  time.sleep(args.pollingintervalsec)
+  
 cleanup()
