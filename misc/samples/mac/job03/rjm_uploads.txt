@@ -1,0 +1,3 @@
+matrix_in.txt
+../script.sh
+../transpose.m
