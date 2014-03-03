@@ -40,9 +40,9 @@ h = {
   'projectcode':
     'project code this job will run under, e.g. uoa00042, ' +
     'if no project code is specified, the default project code, as specified in %s, is used.' % config.get_config_file(),
-  'remotebasedir':
-    'remote base directory where the individual job directories for each job will be created. ' +
-    'if no remote base directory is specified, the default remote base directory as specified in %s is used.' % config.get_config_file(),
+  'remotedir':
+    'remote directory where the individual job directories for each job will be created. ' +
+    'if no remote directory is specified, the default remote directory as specified in %s is used.' % config.get_config_file(),
   'vmem':
     'amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
     'indicating megabytes, gigabytes. ' +
@@ -56,7 +56,7 @@ h = {
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-p','--projectcode', help=h['projectcode'], required=False, type=str)
 parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
-parser.add_argument('-d','--remotebasedir', help=h['remotebasedir'], required=False, type=str)
+parser.add_argument('-d','--remotedir', help=h['remotedir'], required=False, type=str)
 parser.add_argument('-f','--localjobdirfile', help=h['localjobdirfile'], required=True, type=str)
 parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
 parser.add_argument('-l','--logfile', help=h['logfile'], required=False, type=str)
@@ -90,8 +90,8 @@ def get_local_job_directories(localjobdirfile):
 def prepare_job(ssh_conn, args):
   ''' create remote job directory and job description file. '''
   log.debug('Creating job directory...')
-  remote_jobdir, remote_job_desc_file = job.prepare_job(ssh_conn, args.remotebasedir, args.jobname, args.cmd,
-    args.mem, args.vmem, args.walltime, args.jobtype, args.account)
+  remote_jobdir, remote_job_desc_file = job.prepare_job(ssh_conn, args.remotedir, args.jobname, args.cmd,
+    args.mem, args.vmem, args.walltime, args.jobtype, args.projectcode)
   log.debug('Remote job directory: %s' % remote_jobdir)
   return (remote_jobdir, remote_job_desc_file)
 
@@ -153,8 +153,8 @@ except:
   sys.exit(1)
 
 args.vmem = args.mem if not args.vmem else args.vmem
-args.account = conf['CLUSTER']['default_account'] if not args.account else args.account
-args.remotebasedir = conf['CLUSTER']['default_remote_base_directory'] if not args.remotebasedir else args.remotebasedir
+args.projectcode = conf['CLUSTER']['default_project_code'] if not args.projectcode else args.projectcode
+args.remotedir = conf['CLUSTER']['default_remote_directory'] if not args.remotedir else args.remotedir
 
 sftp = ssh_conn.open_sftp()
 
