@@ -64,7 +64,7 @@ def create_config_dir():
     if not os.path.isdir(config_dir):
       raise Exception('unexpected error: %s already exists and is not a directory.' % config_dir)
   
-def create_config_file(host, user, fingerprint, default_account, default_remote_base_directory, rjm_upload, rjm_download):
+def create_config_file(host, user, fingerprint, default_project_code, default_remote_directory, rjm_upload, rjm_download):
   ''' create the configuration file.
       if the configuration directory does not exist, it will be created.
   '''
@@ -75,13 +75,13 @@ def create_config_file(host, user, fingerprint, default_account, default_remote_
   f.write('remote_user=%s%s' % (user, os.linesep))
   f.write('ssh_priv_key_file=%s%s' % (get_priv_ssh_key(), os.linesep))
   f.write('ssh_fingerprint=%s%s' % (fingerprint, os.linesep))
-  f.write('default_account=%s%s' % (default_account, os.linesep))
-  f.write('default_remote_base_directory=%s%s' % (default_remote_base_directory, os.linesep))
-  f.write('remote_prepare_job=%s%s' % ('/share/apps/remoteapi/0.2/prepare_job', os.linesep))
-  f.write('remote_submit_job=%s%s' % ('/share/apps/remoteapi/0.2/submit_job', os.linesep))
-  f.write('remote_is_job_done=%s%s' % ('/share/apps/remoteapi/0.2/is_job_done', os.linesep))
-  f.write('remote_get_job_statuses=%s%s' % ('/share/apps/remoteapi/0.2/get_job_statuses', os.linesep))
-  f.write('remote_cancel_jobs=%s%s' % ('/share/apps/remoteapi/0.2/cancel_jobs', os.linesep))
+  f.write('default_project_code=%s%s' % (default_project_code, os.linesep))
+  f.write('default_remote_directory=%s%s' % (default_remote_directory, os.linesep))
+  f.write('remote_prepare_job=%s%s' % ('/share/apps/remoteapi/0.3/prepare_job', os.linesep))
+  f.write('remote_submit_job=%s%s' % ('/share/apps/remoteapi/0.3/submit_job', os.linesep))
+  f.write('remote_is_job_done=%s%s' % ('/share/apps/remoteapi/0.3/is_job_done', os.linesep))
+  f.write('remote_get_job_statuses=%s%s' % ('/share/apps/remoteapi/0.3/get_job_statuses', os.linesep))
+  f.write('remote_cancel_jobs=%s%s' % ('/share/apps/remoteapi/0.3/cancel_jobs', os.linesep))
   f.write('%s' % os.linesep)
   f.write('[FILE_TRANSFER]%s' % os.linesep)
   f.write('uploads_file=%s%s' % (rjm_upload, os.linesep))
