@@ -12,8 +12,8 @@ memory_pattern = re.compile(r'^\d+[MG]$')
 jobtype_pattern = re.compile(r'^serial$|^serial:\d+$|^mpi:\d+$|^mpi:\d+:\d+$|^mpich:\d+$|^mpich:\d+:\d+$')
 
 h = {
-  'account': 
-    'account code this job is run under, e.g. uoa00042',
+  'projectcode': 
+    'project code this job is run under, e.g. uoa00042',
   'cmd': 
     'Command to run.',
   'basedir':
@@ -95,7 +95,7 @@ def create_job_dir_name(basedir, jobname):
   return jobdir
 
 
-def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, account):
+def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, projectcode):
   validate_walltime(walltime)
   validate_memory(mem)
   validate_memory(vmem)
@@ -107,7 +107,7 @@ def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, account):
   f = open(job_file, "w+")
   f.write('#@ shell = /bin/bash%s' % os.linesep)
   f.write('#@ class = default%s' % os.linesep)
-  f.write('#@ account_no = %s%s' % (account, os.linesep))
+  f.write('#@ account_no = %s%s' % (projectcode, os.linesep))
   f.write('#@ group = nesi%s' % os.linesep)
   f.write('#@ initialdir = %s%s' % (jobdir, os.linesep))
   f.write('#@ output = stdout.txt%s' % os.linesep)
@@ -171,7 +171,7 @@ def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, account):
   return job_file
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument('-a','--account', help=h['account'], required=False, type=str)
+parser.add_argument('-p','--projectcode', help=h['projectcode'], required=False, type=str)
 parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
 parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str)
 parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
@@ -200,7 +200,7 @@ except:
 
 # Create job description
 try:
-  jobfile = create_job_description(jobdir, args.cmd, args.walltime, args.mem, args.vmem, args.jobtype, args.account)
+  jobfile = create_job_description(jobdir, args.cmd, args.walltime, args.mem, args.vmem, args.jobtype, args.projectcode)
   print '%s,%s' % (jobdir, jobfile)
 except:
   print >> sys.stderr, 'Error: Creation of job description failed.'
