@@ -7,10 +7,10 @@ import cer.client.ssh as ssh
 
 PASSPHRASE_CHECKS = {
  'min_length': 8,
- 'contains_uppercase': True,
- 'contains_lowercase': True,
- 'contains_digit': True,
- 'contains_punctuation': True,
+ 'contains_uppercase': False,
+ 'contains_lowercase': False,
+ 'contains_digit': False,
+ 'contains_punctuation': False,
 }
 
 def print_underscored(msg):
@@ -100,16 +100,11 @@ if os.path.isfile(config.get_pub_ssh_key()):
 
 print ''
 print_underscored('Creating SSH key pair')
-print 'The passphrase for the private key must'
-print ' * be at least %s characters in length' % PASSPHRASE_CHECKS['min_length']
-if 'contains_digit' in PASSPHRASE_CHECKS:
-  print ' * contain numbers'
-if 'contains_uppercase' in PASSPHRASE_CHECKS:
-  print ' * contain at least one upper-case letter'
-if 'contains_lowercase' in PASSPHRASE_CHECKS:
-  print ' * contain at least one lower-case letter'
-if 'contains_punctuation' in PASSPHRASE_CHECKS:
-  print ' * contain at least one punctuation symbol (%s)' % string.punctuation
+print 'The passphrase for the private key'
+print ' * must be at least %s characters in length' % PASSPHRASE_CHECKS['min_length']
+print ' * may contain punctuation, numbers, upper case letters and lower case letters.'
+print ''
+print 'Note: Weak passwords may result in your cluster account being compromised and your data being stolen.'
 
 while True:
   passphrase1 = read_passphrase()
@@ -149,4 +144,3 @@ ssh.close_connection(conn)
 
 print ''
 print 'Done'
-
