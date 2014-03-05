@@ -35,6 +35,8 @@ def open_connection_ssh_agent(host, user, ssh_priv_key, port=22):
   '''
   # paramiko fix for windows: https://github.com/paramiko/paramiko/issues/193
   # https://github.com/akx/paramiko/commit/7dfa239d289b91d2040973213a8c49bdf1e07392
+  if not os.path.isfile(ssh_priv_key):
+    raise Exception('Private key does not exist: %s' % ssh_priv_key)
   try:
     client = __connect_with_agent(host, port, user)
   except socket.gaierror:
@@ -79,6 +81,8 @@ def add_private_key_to_agent(ssh_priv_key):
   '''
     Add the private key to an ssh-agent
   '''
+  if not os.path.isfile(ssh_priv_key):
+    raise Exception('Private key does not exist: %s' % ssh_priv_key)
   if sys.platform.lower().startswith('win'):
     # install SendKeys via exe on Windows
     # requires pywinauto 0.4.2
