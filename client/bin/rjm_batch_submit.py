@@ -149,6 +149,7 @@ try:
   ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
 except:
   log.critical('failed to set up ssh connection')
+  log.critical(traceback.format_exc())
   cleanup()
   sys.exit(1)
 
