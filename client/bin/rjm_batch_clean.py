@@ -42,24 +42,22 @@ log = util.get_log()
 # read central configuration file
 try:
   conf = config.get_config()
-  cluster = conf['CLUSTER']
-  retry = conf['RETRY']
 except:
   log.critical('failed to read config file %s' % config.get_config_file())
   cleanup()
   sys.exit(1)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def get_local_job_directories(localjobdirfile):
   ''' get the list of local job directories from file. '''
   return util.get_local_job_directories(localjobdirfile)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def read_job_config_file(job_config_file):
   ''' read the local configuration file of a job (ini-format). '''
   return config.read_job_config_file(job_config_file)
 
-@Retry(retry['max_attempts'], retry['min_wait_s'], retry['max_wait_s'])
+@Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
 def remove_directory(ssh_conn, remote_directory):
   ''' remote remote directory '''
   cmd = "rm -rf %s" % remote_directory
@@ -101,7 +99,7 @@ for localdir in localdirs:
 
 try:
   log.info('cleaning up %s remote directories...' % len(remote_directories))
-  ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
+  ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
   for remote_directory in remote_directories:
     jobids_new = {}
     log.info('removing remote directory %s.' % remote_directory)
@@ -109,5 +107,9 @@ try:
       remove_directory(ssh_conn, remote_directory)
     except:
       log.error('failed to delete remote directory %s. %s' % (remote_directory, traceback.format_exc().strip()))
+except:
+  log.critical('failed to delete remote directories')
+  log.critical(traceback.format_exc().strip())
+  sys.exit(1)
 finally:
   cleanup()
