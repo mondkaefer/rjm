@@ -97,7 +97,7 @@ def add_private_key_to_agent(ssh_priv_key):
     try:
       cwd = os.getcwd()
       os.chdir(os.environ['USERPROFILE'])
-      application.Application.start('"%spageant.exe" "%s"' % (os.environ['CER_TOOLKIT_PATH'], ssh_priv_key))
+      application.Application.start('"%s" "%s"' % (util.get_path_to_exe('pageant.exe'), ssh_priv_key))
     except:
       raise
     finally:
@@ -173,7 +173,7 @@ def create_ssh_rsa_key_pair(passphrase, bits=2048):
   if util.platform_is_windows():
     from pywinauto import application
     priv_key_file_putty = '%s.ppk' % priv_key_file
-    cmd = '"%sputtygen.exe" "%s"' % (os.environ['CER_TOOLKIT_PATH'], priv_key_file)
+    cmd = '"%s" "%s"' % (util.get_path_to_exe('puttygen.exe'), priv_key_file)
     puttygen = application.Application.start(cmd)
     puttygen.Dialog.TypeKeys(passphrase, with_spaces=True)
     puttygen.Dialog.OK.Click()
