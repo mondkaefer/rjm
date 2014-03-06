@@ -132,14 +132,16 @@ def get_local_job_directories(localjobdirfile):
 def get_path_to_exe(exe):
   ''' 
     get path to executable. 
-    if the file exists in the directory pointed to by the environment variable CER_TOOLKIT_PATH, 
+    if the executable exists in the directory pointed to by the environment variable CER_TOOLKIT_PATH, 
     return the path to this executable. otherwise expect it to be in the system path, and return
     only the name of the executable.
   '''
-  path_to_exe = os.environ['CER_TOOLKIT_PATH']
-  if not path_to_exe.endswith(os.path.sep):
-    path_to_exe += os.path.sep
-  path_to_exe += exe
-  if not os.path.isfile(path_to_exe):
-    path_to_exe = exe
+  path_to_exe = exe
+  if 'CER_TOOLKIT_PATH' in os.environ:
+    path_to_exe = os.environ['CER_TOOLKIT_PATH']
+    if not path_to_exe.endswith(os.path.sep):
+      path_to_exe += os.path.sep
+    path_to_exe += exe
+    if not os.path.isfile(path_to_exe):
+      path_to_exe = exe
   return path_to_exe
