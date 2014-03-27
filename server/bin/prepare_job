@@ -102,7 +102,15 @@ def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, projectco
   validate_jobtype(jobtype)
   
   walltime_soft = substract_15s(walltime)
-  
+
+  machine_blacklist = ['compute-a1-016-p','compute-b1-063-p','compute-b1-064-p','compute-bigmem-003-p','compute-c1-001-p','compute-stats-006-p','compute-stats-007-p','compute-stats-009-p','compute-stats-010-p','compute-stats-001-p']
+
+  reqstring = '('
+  for tmp in machine_blacklist:
+    reqstring += '(Machine!="%s")&&' % tmp
+  reqstring = reqstring.strip('&')
+  reqstring += ')'
+
   job_file = '%s%s.job.ll' % (jobdir, os.path.sep)
   f = open(job_file, "w+")
   f.write('#@ shell = /bin/bash%s' % os.linesep)
@@ -114,6 +122,7 @@ def create_job_description(jobdir, cmds, walltime, mem, vmem, jobtype, projectco
   f.write('#@ error = stderr.txt%s' % os.linesep)
   f.write('#@ environment = COPY_ALL%s' % os.linesep)
   f.write('#@ wall_clock_limit = %s,%s%s' % (walltime, walltime_soft, os.linesep))
+  f.write('#@ requirements = %s%s' % (reqstring, os.linesep))
 
   mem_value = int(mem[0:-1])
   mem_unit = mem[-1]
@@ -206,3 +215,4 @@ except:
   print >> sys.stderr, 'Error: Creation of job description failed.'
   print >> sys.stderr, traceback.format_exc()
   sys.exit(1)
+
