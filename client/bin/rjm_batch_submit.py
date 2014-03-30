@@ -23,9 +23,9 @@ h = {
     'of the same job',
   'jobtype':
     'type of the job. the number of processes and threads is specified separated by colons. ' +
-    'For serial/multi-threaded jobs: serial:<#threads>. ' +
+    'For serial/multi-threaded jobs: serial[:<#threads>]. ' +
     'For mpi jobs: mpi:<#processes>[:<#threads>]. ' +
-    'Examples: serial, serial:5, mpi:4, mpi:5:4, mpich:6',
+    'Examples: serial, serial:5, mpi:4, mpi:5:4',
   'localjobdirfile':
     'file that contains the names of the local job directories, one name per line.',
   'logfile':
