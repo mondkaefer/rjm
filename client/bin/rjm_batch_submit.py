@@ -117,8 +117,7 @@ def get_inputfile_names(uploads_file):
 def submit_job(ssh_conn, remote_job_desc_file):
   ''' submit a job. '''
   log.debug('submitting job...')
-  job_base_id = job.submit_job(ssh_conn, remote_job_desc_file)
-  jobid = '%s.0' % job_base_id
+  jobid = job.submit_job(ssh_conn, remote_job_desc_file)
   log.debug('Job ID: %s' % jobid)
   return jobid
 
