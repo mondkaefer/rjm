@@ -7,12 +7,11 @@ import cer.client.ssh as ssh
 conf = config.get_config()
 cluster = conf['CLUSTER']
 
-def prepare_job(ssh_conn, basedir, jobname, cmds, mem, vmem, walltime, jobtype, projectcode):  
+def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projectcode):  
   commandline = '%s ' % cluster['remote_prepare_job'] + \
     '--basedir %s ' % basedir + \
     '--jobname %s ' % jobname + \
     '--mem %s ' % mem + \
-    '--vmem %s ' % vmem + \
     '--walltime %s ' % walltime + \
     '--jobtype %s ' % jobtype + \
     '--projectcode %s ' % projectcode

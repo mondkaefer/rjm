@@ -43,10 +43,6 @@ h = {
   'remotedir':
     'remote directory where the individual job directories for each job will be created. ' +
     'if no remote directory is specified, the default remote directory as specified in %s is used.' % config.get_config_file(),
-  'vmem':
-    'amount of virtual memory required by this job. Has to be postfixed with one of the following units: M,G, ' +
-    'indicating megabytes, gigabytes. ' +
-    'examples: 500M, 3G',
   'walltime':
     'wall clock time this job will run for, specified in hours(h), minutes(m) and seconds(s) in format h[h*]:m[m]:s[s]. ' +
     'the job will be terminated if it has not finished after the specified duration. ' +
@@ -62,7 +58,6 @@ parser.add_argument('-l','--logfile', help=h['logfile'], required=False, type=st
 parser.add_argument('-ll','--loglevel', help=h['loglevel'], required=False, type=str, choices=['debug','info','warn','error','critical'])
 parser.add_argument('-m','--mem', help=h['mem'], required=True, type=str)
 parser.add_argument('-p','--projectcode', help=h['projectcode'], required=False, type=str)
-parser.add_argument('-v','--vmem', help=h['vmem'], required=False, type=str)
 parser.add_argument('-w','--walltime', help=h['walltime'], required=True, type=str)
 args = parser.parse_args()
 
@@ -91,7 +86,7 @@ def prepare_job(ssh_conn, args):
   ''' create remote job directory and job description file. '''
   log.debug('creating job directory...')
   remote_jobdir, remote_job_desc_file = job.prepare_job(ssh_conn, args.remotedir, args.jobname, args.cmd,
-    args.mem, args.vmem, args.walltime, args.jobtype, args.projectcode)
+    args.mem, args.walltime, args.jobtype, args.projectcode)
   log.debug('Remote job directory: %s' % remote_jobdir)
   return (remote_jobdir, remote_job_desc_file)
 
@@ -152,7 +147,6 @@ except:
   cleanup()
   sys.exit(1)
 
-args.vmem = args.mem if not args.vmem else args.vmem
 args.projectcode = conf['CLUSTER']['default_project_code'] if not args.projectcode else args.projectcode
 args.remotedir = conf['CLUSTER']['default_remote_directory'] if not args.remotedir else args.remotedir
 

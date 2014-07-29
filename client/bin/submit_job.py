@@ -20,9 +20,6 @@ h = {
     'Input file to be uploaded prior to job execution.',
   'memgb':
     'Amount of memory [GigaBytes] required by this job.',
-  'vmemgb':
-    'Amount of virtual memory [GigaBytes] required by this job. If not specified, ' +
-    'the value of the parameter memorygb will be used.',
   'jobname':
     'Name of the job. The value of the parameter jobname postfixed with the current date and time will ' +
     'be used to create the job directory.',
@@ -56,7 +53,6 @@ parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str
 parser.add_argument('-e','--module', help=h['module'], required=False, type=str, action='append')
 parser.add_argument('-i','--inputfile', help=h['inputfile'], required=False, action='append')
 parser.add_argument('-m','--memgb', help=h['memgb'], required=True, type=int)
-parser.add_argument('-v','--vmemgb', help=h['vmemgb'], required=False, type=int)
 parser.add_argument('-n','--jobname', help=h['jobname'], required=False, type=str, default='job')
 parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
 parser.add_argument('-p','--pcode', help=h['pcode'], required=False, type=str)
@@ -66,7 +62,6 @@ parser.add_argument('-x','--extension', help=h['extension'], required=False, typ
 parser.add_argument('-z','--pollingintervalsec', help=h['pollingintervalsec'], required=False, type=int)
 
 args = parser.parse_args()
-args.vmemgb = args.memgb if not args.vmemgb else args.vmemgb
 
 # Check existence of input files
 if args.inputfile:
@@ -95,7 +90,7 @@ except:
 # Call remote script to prepare the job
 try:
   jobdir, jobscript = job.prepare_job(ssh_conn, args.basedir, args.jobname, args.cmd, args.module,
-    args.memgb, args.vmemgb, args.walltimeh, args.jobtype)
+    args.memgb, args.walltimeh, args.jobtype)
   print 'Created job directory %s' % jobdir
 except:
   print >> sys.stderr, "Error: Remote command to prepare job failed."
