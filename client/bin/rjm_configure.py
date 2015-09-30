@@ -117,7 +117,8 @@ while True:
     break
   else:
     print "Passphrases don't match."
-  
+
+os.environ['PRIV_KEY_PASSWD'] = passphrase1  
 print ''
 print 'Generating SSH key pair. This may take up to a minute to complete...'
 fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)

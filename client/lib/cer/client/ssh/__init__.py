@@ -167,27 +167,10 @@ def create_ssh_rsa_key_pair(passphrase, bits=2048):
 
   # If running under Windows, convert OpenSSH private key to PuTTY private key,
   # because pageant cannot load OpenSSH keys.
-  # To do that, launch and drive puttygen.exe GUI via pywinauto, because the Windows
-  # version of puttygen doesn't have a proper command-line interface and there doesn't
-  # seem to be another easy way to convert an OpenSSH key into a PuTTY key
   if util.platform_is_windows():
-    from pywinauto import application
     priv_key_file_putty = '%s.ppk' % priv_key_file
-    cmd = '"%s" "%s"' % (util.get_path_to_exe('puttygen.exe'), priv_key_file)
-    puttygen = application.Application.start(cmd)
-    puttygen.Dialog.TypeKeys(passphrase, with_spaces=True)
-    puttygen.Dialog.OK.Click()
-    puttygen.Dialog.OK.Click()
-    puttygen.Dialog.Edit3.Select()
-    puttygen.Dialog.Edit3.TypeKeys('{BACKSPACE}')
-    puttygen.Dialog.Edit3.TypeKeys('Auckland Pan Cluster', with_spaces=True)
-    puttygen.Dialog.SavePrivateKey.Click()
-    save_dialog = puttygen['Save private key as:']
-    save_dialog.Edit.TypeKeys(priv_key_file_putty, with_spaces=True)
-    save_dialog.Save.SetFocus()
-    save_dialog.Save.Click()
-    puttygen.Dialog.MenuItem('File->Exit').Click()
-    # remove OpenSSH private key file because it's no longer needed
+    cmd = '"%s" "%s" -e -o "%s"' % (util.get_path_to_exe('puttygencmd.exe'), priv_key_file, priv_key_file_putty)
+    util.run(cmd)  
     os.remove(priv_key_file)
     os.rename(priv_key_file_putty, priv_key_file)
 
