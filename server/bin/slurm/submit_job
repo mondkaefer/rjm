@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ "$#" != "1" ]; then
+  echo "Error: No job description file specified" >&2
+  exit 1
+fi
+
+jobfile=${1}
+
+if [ ! -f ${jobfile} ]; then
+  echo "Error: Job description file ${jobfile} doesn't exist or is not a file" >&2
+  exit 1
+fi
+
+output=$(sbatch --export=NONE ${jobfile})
+rc=$?
+if [ "${rc}" != "0" ]; then
+  exit 1
+fi
+
+jobid=$(echo $output | rev | cut -d\  -f1 | rev)
+echo ${jobid}

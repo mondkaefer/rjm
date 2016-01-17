@@ -1,0 +1,156 @@
+#!/share/apps/Python/noarch/2.7.4/gcc-4.4.6/bin/python
+import re
+import os
+import sys
+import datetime
+import argparse
+import traceback
+import binascii
+
+walltime_pattern = re.compile(r'^\d{1,2}$|^\d{1,2}:\d{1,2}$|^\d+:\d{1,2}:\d{1,2}$')
+memory_pattern = re.compile(r'^\d+[MG]$')
+jobtype_pattern = re.compile(r'^serial$|^serial:\d+$|^mpi:\d+$|^mpi:\d+:\d+$')
+
+h = {
+  'projectcode': 
+    'project code this job is run under, e.g. uoa00042',
+  'cmd': 
+    'Command to run.',
+  'basedir':
+    'Base directory of the job where the job directory for this job will be created. ' +
+    'The value of the parameter jobname postfixed with the current date and time will ' +
+    'be used to create the job directory.',
+  'mem':
+    'Amount of memory required by this job.',
+  'jobname':
+    'Name of the job. The value of the parameter jobname postfixed with the current date and time will ' +
+    'be used to create the job directory.',
+  'jobtype':
+    'Type of the job. The number of processes and threads is specified separated by colons. ' +
+    'For serial/multi-threaded jobs: serial:<#threads>. ' +
+    'For MPI jobs: mpi:<#processes>[:<#threads>]. ' +
+    'Examples: serial, serial:5, mpi:4, mpi:5:4',
+  'queue': 
+    'Queue to be used for this job',
+  'walltime':
+    'Wall clock time this job will run for.',
+  'extension':
+    'Additional scheduler directive',
+}
+
+def validate_walltime(walltime):
+  ''' validate walltime has been specified correctly '''
+  if not walltime_pattern.match(walltime):
+    raise Exception('walltime has not been specified correctly: %s' % walltime)
+
+def validate_memory(memory):
+  ''' validate memory has been specified correctly '''
+  if not memory_pattern.match(memory):
+    raise Exception('memory has not been specified correctly: %s' % memory)    
+
+def validate_jobtype(jobtype):
+  ''' validate jobtype has been specified correctly '''
+  if not jobtype_pattern.match(jobtype):
+    raise Exception('jobtype has not been specified correctly: %s' % jobtype)    
+
+def create_job_dir_name(basedir, jobname):
+  # Fixme: handle potential whitespaces
+  now = datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S.%f')
+  jobdir ='%s%s%s_%s' % (basedir, os.path.sep, jobname, now)
+  if os.path.exists(jobdir):
+    # unlikely, but may perhaps happen
+    jobdir = '%s_%s' % (jobdir, binascii.b2a_hex(os.urandom(15)))
+    if os.path.exists(jobdir):
+      # giving up
+      raise Exception('Generation of unique job directory name failed')
+  return jobdir
+
+def create_job_description(jobdir, cmds, walltime, mem, jobtype, projectcode):
+  validate_walltime(walltime)
+  validate_memory(mem)
+  validate_jobtype(jobtype)
+
+  #machine_blacklist_serial = ['compute-bigmem-001','compute-bigmem-002','compute-bigmem-003','compute-bigmem-004','compute-a1-016','compute-b1-063','compute-b1-064','compute-bigmem-003','compute-c1-001','compute-stats-006','compute-stats-007','compute-stats-008','compute-stats-009','compute-stats-010','compute-stats-001'] 
+
+  # Updated blacklist 13/5/2015 because some nodes were taken out
+  # machine_blacklist_serial = ['compute-bigmem-002','compute-bigmem-004','compute-a1-016','compute-b1-063','compute-b1-064','compute-c1-001','compute-stats-001']  
+  machine_blacklist_serial = []  
+
+
+  if jobtype.startswith('serial'):
+    exclude_list = ','.join(machine_blacklist_serial)
+  else:
+    exclude_list = []
+
+  mem_value = int(mem[0:-1])
+  mem_unit = mem[-1]
+
+  if mem_unit == 'G':
+    mem_value = mem_value * 1024
+
+  job_file = '%s%s.job.txt' % (jobdir, os.path.sep)
+  f = open(job_file, "w+")
+  f.write('#!/bin/bash%s' % os.linesep)
+  f.write('#SBATCH -A %s%s' % (projectcode, os.linesep))
+  f.write('#SBATCH --workdir=%s%s' % (jobdir, os.linesep))
+  f.write('#SBATCH --output=stdout.txt%s' % os.linesep)
+  f.write('#SBATCH --error=stderr.txt%s' % os.linesep)
+  f.write('#SBATCH --time=%s%s' % (walltime, os.linesep))
+  f.write('#SBATCH --mem-per-cpu=%s%s' % (mem_value, os.linesep))
+  if exclude_list:
+    f.write('#SBATCH --exclude=%s%s' % (exclude_list, os.linesep))
+  
+  # Determine serial, mpi, etc
+  tokens = jobtype.split(':')
+  if tokens[0] == 'serial': # serial or multi-threaded
+    if len(tokens) == 2:
+      f.write('#SBATCH --cpus-per-task=%s%s' % (tokens[1], os.linesep))      
+  else: # mpi
+    f.write('#SBATCH --ntasks=%s%s' % (tokens[1], os.linesep))      
+    f.write('#SBATCH --ntasks-per-node=1%s' % os.linesep)
+    if len(tokens) == 3:
+      f.write('#SBATCH --cpus-per-task=%s%s' % (tokens[2], os.linesep))      
+  
+  f.write('%s' % os.linesep)
+  
+  for cmd in cmds:
+    if not cmd.strip().startswith('module load'):
+      # cmd = 'srun %s' % cmd
+      pass
+    f.write('%s%s' % (cmd, os.linesep))
+  f.close()
+  return job_file
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('-p','--projectcode', help=h['projectcode'], required=True, type=str)
+parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
+parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str)
+parser.add_argument('-j','--jobtype', help=h['jobtype'], required=True, type=str)
+parser.add_argument('-m','--mem', help=h['mem'], required=True, type=str)
+parser.add_argument('-n','--jobname', help=h['jobname'], required=False, type=str, default='job')
+parser.add_argument('-q','--queue', help=h['queue'], required=False, type=str)
+parser.add_argument('-w','--walltime', help=h['walltime'], required=True, type=str)
+
+try:
+  args = parser.parse_args()
+except:
+  print >> sys.stderr, 'Error: Failed to parse command-line arguments.'
+  sys.exit(1)
+  
+# Create job directory
+try:
+  jobdir = create_job_dir_name(args.basedir, args.jobname)
+  os.makedirs(jobdir)
+except:
+  print >> sys.stderr, 'Error: Creation of job directory %s failed.' % jobdir
+  print >> sys.stderr, traceback.format_exc()
+  sys.exit(1)
+
+# Create job description
+try:
+  jobfile = create_job_description(jobdir, args.cmd, args.walltime, args.mem, args.jobtype, args.projectcode)
+  print '%s,%s' % (jobdir, jobfile)
+except:
+  print >> sys.stderr, 'Error: Creation of job description failed.'
+  print >> sys.stderr, traceback.format_exc()
+  sys.exit(1)
