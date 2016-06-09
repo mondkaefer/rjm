@@ -1,0 +1,29 @@
+#!/bin/bash
+
+now=$(date +"%Y-%m-%d_%H-%M-%S-%N")
+me=$(whoami)
+tmpfile="/tmp/$(basename $0).$$.tmp"
+email_from="eresearch-support@auckland.ac.nz"
+email_to="m.feller@auckland.ac.nz"
+absolute_path=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/`basename "${BASH_SOURCE[0]}"`
+
+touch ${tmpfile}
+
+trap 'rm -f ${tmpfile}' INT TERM EXIT 
+
+squeue > ${tmpfile}
+rc=${?}
+numlines=$(cat ${tmpfile} | tail -n +2 | head -n -1 | sed -e 's/  */ /g' | grep -v ' C ' | grep -v ' CA ' | cut -d\  -f2,6 | wc -l)
+
+if [ "${rc}" != "0" ]; then
+  echo "There was a problem getting job states: squeue returned non-zero exit code ${rc}." >&2
+  exit 1
+fi
+
+if [ "${numlines}" == "0" ]; then
+  echo "There was a problem getting job states: squeue did not return output." >&2
+  cat ${tmpfile} | mail -r "${email_from}" -s "${absolute_path}: squeue did not return output" "${email_to}"
+  exit 1
+fi
+ 
+cat ${tmpfile} | tail -n +2 | head -n -1 | sed -e 's/  */ /g' | grep -v ' C ' | grep -v ' CA ' | cut -d\  -f2,6
