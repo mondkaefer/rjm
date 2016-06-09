@@ -9,8 +9,8 @@ cluster = conf['CLUSTER']
 
 def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projectcode):  
   commandline = '%s ' % cluster['remote_prepare_job'] + \
-    '--basedir %s ' % basedir + \
-    '--jobname %s ' % jobname + \
+    '--basedir "%s" ' % basedir + \
+    '--jobname "%s" ' % jobname.replace(" ", "_") + \
     '--mem %s ' % mem + \
     '--walltime %s ' % walltime + \
     '--jobtype %s ' % jobtype + \
