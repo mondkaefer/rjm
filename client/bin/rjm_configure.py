@@ -14,30 +14,30 @@ PASSPHRASE_CHECKS = {
 }
 
 def print_underscored(msg):
-  print msg
-  print '#' * len(msg)
+  print(msg)
+  print('#' * len(msg))
 
 def read_passphrase():
   passphrase = getpass.getpass(prompt='%sPassphrase for private key: ' % os.linesep)
   
   # check length
   if len(passphrase) < PASSPHRASE_CHECKS['min_length']:
-    print "Passphrase must be at least 8 characters long."
+    print("Passphrase must be at least 8 characters long.")
     return False
 
   # verify existence of lower-case letter
   if PASSPHRASE_CHECKS['contains_lowercase'] and (passphrase == passphrase.upper()):
-    print "Passphrase must contain at least one lower-case letter."
+    print("Passphrase must contain at least one lower-case letter.")
     return False
     
   # verify existence of upper-case letter
   if PASSPHRASE_CHECKS['contains_uppercase'] and (passphrase == passphrase.lower()):
-    print "Passphrase must contain at least one upper-case letter."
+    print("Passphrase must contain at least one upper-case letter.")
     return False
     
   # verify existence of digits
   if PASSPHRASE_CHECKS['contains_digit'] and not re.compile('\d').search(passphrase):
-    print "Passphrase must contain at least one digit."
+    print("Passphrase must contain at least one digit.")
     return False
 
   # verify existence of punctuation
@@ -48,7 +48,7 @@ def read_passphrase():
         found = True
         break
     if not found:
-      print "Passphrase must contain at least one punctuation (%s)." % string.punctuation
+      print("Passphrase must contain at least one punctuation (%s)." % string.punctuation)
       return False
   
   return passphrase
@@ -63,14 +63,14 @@ def read_config_file_input():
     if user:
       break
     else:
-      print "Cluster login name (UPI) must not be empty"
+      print("Cluster login name (UPI) must not be empty")
 
   while True:
     default_project_code = raw_input("Default project code: ").strip()
     if default_project_code:
       break
     else:
-      print "Default project code must not be empty"
+      print("Default project code must not be empty")
 
   suggestion = '/projects/%s/%s/rjm-jobs' % (default_project_code, user)
   default_remote_directory = raw_input("Default remote directory [%s]: " % suggestion).strip()
@@ -98,13 +98,13 @@ if os.path.isfile(config.get_pub_ssh_key()):
   with open(config.get_pub_ssh_key(), "r") as f:
     old_pub_key = f.read().strip()
 
-print ''
+print('')
 print_underscored('Creating SSH key pair')
-print 'The passphrase for the private key'
-print ' * must be at least %s characters in length' % PASSPHRASE_CHECKS['min_length']
-print ' * may contain punctuation, numbers, upper case letters and lower case letters.'
-print ''
-print 'Note: Weak passwords may result in your cluster account being compromised and your data being stolen.'
+print('The passphrase for the private key')
+print(' * must be at least %s characters in length' % PASSPHRASE_CHECKS['min_length'])
+print(' * may contain punctuation, numbers, upper case letters and lower case letters.')
+print('')
+print('Note: Weak passwords may result in your cluster account being compromised and your data being stolen.')
 
 while True:
   passphrase1 = read_passphrase()
@@ -116,19 +116,19 @@ while True:
   if passphrase1 == passphrase2:
     break
   else:
-    print "Passphrases don't match."
+    print("Passphrases don't match.")
 
 os.environ['PRIV_KEY_PASSWD'] = passphrase1  
-print ''
-print 'Generating SSH key pair. This may take up to a minute to complete...'
+print('')
+print('Generating SSH key pair. This may take up to a minute to complete...')
 fingerprint = ssh.create_ssh_rsa_key_pair(passphrase1)
 
-print ''
+print('')
 print_underscored('Creating configuration file. Need some information.')
 host, user, default_project_code, default_remote_directory, uploads_file, downloads_file = read_config_file_input()
 config.create_config_file(host, user, fingerprint, default_project_code, default_remote_directory, uploads_file, downloads_file)
 
-print ''
+print('')
 print_underscored('Uploading public key to login node')
 f = open(config.get_pub_ssh_key(), "r")
 pubkey = f.read()
@@ -143,5 +143,5 @@ if old_pub_key:
 ssh.run('''echo '%s' >> %s''' % (pubkey, authz_keys), conn)
 ssh.close_connection(conn)
 
-print ''
-print 'Done'
+print('')
+print('Done')

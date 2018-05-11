@@ -1,6 +1,9 @@
 import os
-import ConfigParser
 import cer.client.util as util
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import SafeConfigParser as ConfigParser
 
 # name of the private SSH key
 SSH_PRIV_KEY = 'auckland_pan_cluster'
@@ -15,7 +18,7 @@ DEFAULT_UPLOAD = 'rjm_uploads.txt'
 # Name of the file that contains the list of files to be downloaded after the job is done
 DEFAULT_DOWNLOAD = 'rjm_downloads.txt'
 
-class ConfigReader(ConfigParser.ConfigParser):
+class ConfigReader(ConfigParser):
   def as_dict(self):
     ''' return the configuration as dictionary '''
     d = dict(self._sections)
@@ -110,7 +113,7 @@ def read_job_config_file(job_config_file):
 def create_or_update_job_config_file(localdir, props_dict):
   ''' create or update metadata file for job in local job directory (ini-format) '''
   configfile = '%s%s.job.ini' % (localdir, os.path.sep)
-  config = ConfigParser.RawConfigParser()
+  config = ConfigParser()
   if os.path.isfile(configfile):
     util.get_log().debug('Updating job config file %s with %s' % (configfile, str(props_dict)))
     config.read(configfile)    

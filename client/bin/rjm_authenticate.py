@@ -14,7 +14,7 @@ except:
 
 if util.platform_is_windows():
   ssh.add_private_key_to_agent(config.get_priv_ssh_key())
-  print 'Done'
+  print('Done')
 else:
   found = False
   agent = Agent()
@@ -26,8 +26,8 @@ else:
         found = True
 
   if found:
-    print 'SSH key already registered with agent. Nothing to do.'
+    print('SSH key already registered with agent. Nothing to do.')
   else:
-    print 'SSH key not registered with agent. Adding...'
+    print('SSH key not registered with agent. Adding...')
     ssh.add_private_key_to_agent(config.get_priv_ssh_key())
-    print 'Done'
+    print('Done')

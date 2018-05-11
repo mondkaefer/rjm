@@ -5,9 +5,7 @@ import time
 import shlex
 import random
 import logging
-import StringIO
 import traceback
-import ConfigParser
 from logging import StreamHandler, FileHandler
 from logging.handlers import MemoryHandler
 from datetime import datetime

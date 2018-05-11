@@ -6,7 +6,6 @@ import getpass
 import logging
 import tempfile
 import stat
-import StringIO
 import socket
 import cer.client.util as util
 import cer.client.util.config as config
@@ -14,6 +13,10 @@ from datetime import datetime
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from paramiko import SSHClient, SSHException, AutoAddPolicy, RSAKey
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 logging.getLogger('paramiko.transport').addHandler(logging.NullHandler())
 
@@ -60,7 +63,7 @@ def __connect_with_agent(host, port, user):
       client.set_missing_host_key_policy(AutoAddPolicy())
       client.connect(hostname=host, port=port, username=user, allow_agent=True)
       break
-    except SSHException, sshe:
+    except SSHException as sshe:
       # NB. If you get errors like "Error reading SSH protocol banner ... Connection reset by peer",
       # the server may be enforcing a maximum number of concurrent connections (eg. MaxStartups in OpenSSH).
       # This sleeping and retrying should only be a workaround
@@ -132,8 +135,8 @@ def run(command_and_args, connection):
     If a connection is provided, it will be used. The connection will not be closed after the remote
     command execution. Otherwise a new connection is created, and closed after the remote command execution.
   '''
-  stdout = StringIO.StringIO()
-  stderr = StringIO.StringIO()
+  stdout = StringIO()
+  stderr = StringIO()
   tmpstdin, tmpstdout, tmpstderr = connection.exec_command(command_and_args)
   stdout.write(tmpstdout.read())
   stderr.write(tmpstderr.read())
