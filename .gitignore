@@ -33,3 +33,7 @@ nosetests.xml
 .project
 .pydevproject
 
+
+# PyCharm
+.idea
+venv
