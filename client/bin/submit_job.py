@@ -19,7 +19,7 @@ h = {
   'inputfile' :
     'Input file to be uploaded prior to job execution.',
   'memgb':
-    'Amount of memory [GigaBytes] required by this job.',
+    'Amount of memory in GB required by this job.',
   'jobname':
     'Name of the job. The value of the parameter jobname postfixed with the current date and time will ' +
     'be used to create the job directory.',
@@ -30,7 +30,7 @@ h = {
   'jobtype':
     'Type of the job. Like serial serial:5, mpi:4, mpi:5:4, mpich:6',
   'walltimeh':
-    'Wall clock time this job will run for.',
+    'Wall clock time in hours this job will run for.',
   'extension':
     'Additional scheduler directive',
   'pollingintervalsec':
@@ -39,6 +39,8 @@ h = {
 
 ssh_conn = None
 sftp_conn = None
+
+log = util.get_log()
 
 def cleanup():
   if ssh_conn:
@@ -50,7 +52,6 @@ def cleanup():
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-c','--cmd', help=h['cmd'], required=True, type=str, action='append')
 parser.add_argument('-d','--basedir', help=h['basedir'], required=True, type=str)
-parser.add_argument('-e','--module', help=h['module'], required=False, type=str, action='append')
 parser.add_argument('-i','--inputfile', help=h['inputfile'], required=False, action='append')
 parser.add_argument('-m','--memgb', help=h['memgb'], required=True, type=int)
 parser.add_argument('-n','--jobname', help=h['jobname'], required=False, type=str, default='job')
@@ -67,34 +68,31 @@ args = parser.parse_args()
 if args.inputfile:
   for f in args.inputfile:
     if not os.path.exists(f):
-      print >> sys.stderr, 'Error: Input file %s does not exist' % f
+      log.error('Input file %s does not exist' % f)
       sys.exit(1)
     elif not os.path.isfile(f):
-      print >> sys.stderr, 'Error: Input file %s is not a file' % f
+      log.error('Input file %s is not a file' % f)
       sys.exit(1)
       
+
 # Set up SSH connection
 try:
-  parser = util.get_config_parser()
-  host = parser.get('MAIN', 'remote_host')
-  user = parser.get('MAIN', 'remote_user')
-  privkey = parser.get('MAIN', 'ssh_priv_key_file')
-  ssh_conn = ssh.open_connection_ssh_agent(host, user, privkey)
+    ssh_conn = ssh.open_connection_with_config()
 except:
-  print >> sys.stderr, "Error: Failed to set up SSH connection"
-  print >> sys.stderr, 'Details:'
-  print >> sys.stderr, traceback.format_exc()
-  cleanup()
-  sys.exit(1)
-  
+    log.error('Failed to set up SSH connection')
+    log.error('Details:')
+    log.error(traceback.format_exc())
+    cleanup()
+    sys.exit(1)
+
 # Call remote script to prepare the job
 try:
-  jobdir, jobscript = job.prepare_job(ssh_conn, args.basedir, args.jobname, args.cmd, args.module,
-    args.memgb, args.walltimeh, args.jobtype)
-  print 'Created job directory %s' % jobdir
+  jobdir, jobscript = job.prepare_job(ssh_conn, args.basedir, args.jobname, args.cmd,
+    '%sG' % args.memgb, '%s:00:00' % args.walltimeh, args.jobtype, args.pcode)
+  log.info('Created job directory %s' % jobdir)
 except:
-  print >> sys.stderr, "Error: Remote command to prepare job failed."
-  print >> sys.stderr, traceback.format_exc()
+  log.error('Remote command to prepare job failed.')
+  log.error(traceback.format_exc())
   cleanup()
   sys.exit(1)
   
@@ -103,45 +101,38 @@ if args.inputfile:
   try:
     sftp = ssh_conn.open_sftp()
     for f in args.inputfile:
-      print 'Uploading file %s to job directory' % f
+      log.info('Uploading file %s to job directory' % f)
       sftp.put(f, '%s/%s' % (jobdir, os.path.basename(f)))
   except:
-    print 'Failed to upload file %s' % f
-    print >> sys.stderr, traceback.format_exc()
+    log.error('Failed to upload file %s' % f)
+    log.error(traceback.format_exc())
     cleanup()
     sys.exit(1)
   
 # Submit job
 try:
-  print 'Submitting job...'  
+  log.info('Submitting job...')
   jobid = job.submit_job(ssh_conn, jobscript)
-  print 'Job ID: %s ' % jobid
+  log.info('Job ID: %s ' % jobid)
 except:
-  print >> sys.stderr, "Error: Failed to submit job."
-  print >> sys.stderr, traceback.format_exc()
+  log.error('Failed to submit job.')
+  log.error(traceback.format_exc())
   cleanup()
   sys.exit(1)
+
+# Wait for job to finish
+if args.pollingintervalsec:
+  finished = False
+  log.info('Waiting for job to finish (polling every %s seconds)...' % args.pollingintervalsec)
+  time.sleep(args.pollingintervalsec)
+  while True:
+    finished = job.has_finished(ssh_conn, jobid)
+    if finished:
+      break
+    time.sleep(args.pollingintervalsec)
+  log.info('Job finished. Exiting')
 
 try:
   ssh.close_connection(ssh_conn)
 except:
   pass
-
-# Wait for job to finish
-if args.pollingintervalsec:
-  finished = False
-  print 'Waiting for job to finish (polling every %s seconds)...' % args.pollingintervalsec
-  time.sleep(args.pollingintervalsec)
-  while True:
-    try:
-      # Set up SSH connection
-      ssh_conn = ssh.open_connection_ssh_agent(host, user, privkey)
-      finished = job.has_finished(ssh_conn, jobid)
-      ssh.close_connection(ssh_conn)
-    except:
-      print >> sys.stderr, "Error: Failed to get status of job."
-      print >> sys.stderr, traceback.format_exc()
-    if finished:
-      break
-    time.sleep(args.pollingintervalsec)
-  print 'Job finished. Exiting'

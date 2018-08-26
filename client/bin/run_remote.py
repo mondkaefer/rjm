@@ -1,12 +1,19 @@
 import os
 import sys
-import cer.client.util.config as config
+import traceback
 import cer.client.ssh as ssh
+import cer.client.util as util
 
-conf = config.get_config()
-cluster = conf['CLUSTER']
+log = util.get_log()
 
-ssh_conn = ssh.open_connection_ssh_agent(cluster['remote_host'], cluster['remote_user'], cluster['ssh_priv_key_file'])
+# Set up SSH connection
+try:
+    ssh_conn = ssh.open_connection_with_config()
+except:
+    log.error('Failed to set up SSH connection')
+    log.error(traceback.format_exc())
+    sys.exit(1)
+
 cmd = ' '.join(sys.argv[1:])
 rc, stdout, stderr = ssh.run(cmd, ssh_conn)
 ssh.close_connection(ssh_conn)

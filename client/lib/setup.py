@@ -6,6 +6,6 @@ setup(
   description='Library for remote execution and file transfer',
   author='Martin Feller',
   author_email='m.feller@auckland.ac.nz',
-  packages=['cer', 'cer.client', 'cer.client.util', 'cer.client.ssh', 'cer.client.job'],
-  install_requires=['paramiko', 'pycrypto']
+  packages=['cer', 'cer.client', 'cer.client.util', 'cer.client.ssh', 'cer.client.job', 'cer.client.pypass'],
+  install_requires=['paramiko', 'pyotp', 'python-gnupg', 'pyInstaller']
 )

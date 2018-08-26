@@ -6,8 +6,10 @@ import traceback
 import cer.client.ssh as ssh
 import cer.client.job as job
 import cer.client.util as util
+import cer.client.ssh as ssh
 import cer.client.util.config as config
 from cer.client.util import Retry
+
 
 def cleanup():
   if ssh_conn:
@@ -152,7 +154,7 @@ while True:
     log.info('checking for job status of %s jobs...' % len(jobs))
     error_occured = False
     jobs_new = {}
-    ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
+    ssh_conn = ssh.open_connection_with_config()
     log.debug('getting job statuses')
     jobmap = job.get_job_statuses(ssh_conn)
     for job_id in jobs.keys():

@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import time
 import shlex
@@ -8,7 +7,6 @@ import logging
 import traceback
 from logging import StreamHandler, FileHandler
 from logging.handlers import MemoryHandler
-from datetime import datetime
 from subprocess import Popen, PIPE
 
 # default logging configuration

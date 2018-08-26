@@ -99,9 +99,9 @@ for localdir in localdirs:
 # cancel jobs
 # set up SSH connection
 try:
-  ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
+  ssh_conn = ssh.open_connection_with_config()
 except:
-  log.critical('failed to set up ssh connection')
+  log.critical('failed to set up ssh connection.')
   log.critical(traceback.format_exc())
   cleanup()
   sys.exit(1)
@@ -119,7 +119,9 @@ while True:
     log.info('waiting for cancellation of %s jobs...' % len(jobids))
     error_occured = False
     jobids_new = []
-    ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
+    ssh_conn = ssh.open_connection(conf['CLUSTER']['lander_host'], conf['CLUSTER']['login_host'],
+                                   conf['CLUSTER']['remote_user'], conf['CLUSTER']['password'],
+                                   conf['CLUSTER']['qr_secret'])
     log.debug('getting job statuses')
     jobmap = job.get_job_statuses(ssh_conn)
     for jobid in jobids:

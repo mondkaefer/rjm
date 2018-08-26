@@ -99,7 +99,7 @@ for localdir in localdirs:
 
 try:
   log.info('cleaning up %s remote directories...' % len(remote_directories))
-  ssh_conn = ssh.open_connection_ssh_agent(conf['CLUSTER']['remote_host'], conf['CLUSTER']['remote_user'], conf['CLUSTER']['ssh_priv_key_file'])
+  ssh_conn = ssh.open_connection_with_config()
   for remote_directory in remote_directories:
     jobids_new = {}
     log.info('removing remote directory %s.' % remote_directory)

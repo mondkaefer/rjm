@@ -5,17 +5,17 @@ if [ "$#" != "1" ]; then
  exit 1
 fi
 
-jobid=${1}
+job_id="${1}"
 
-res=$(squeue --job ${jobid} >/dev/null 2>/dev/null)
+res=$(squeue --job ${job_id} >/dev/null 2>/dev/null)
 rc=$?
 if [ "${rc}" != "0" ]; then
   echo "There was a problem getting the job state. Perhaps an invalid job id?" >&2
   exit 1
 fi
 
-res=$(squeue --job ${jobid} | grep ${jobid})
-status=$(echo $res | cut -d\  -f5)
+res=$(squeue --job ${job_id} | grep ${job_id})
+status=$(echo ${res} | cut -d\  -f5)
 
 if [ "${status}" == "" ] || [ "${status}" == "C" ] || [ "${status}" == "CA" ]; then
   echo 'True'
