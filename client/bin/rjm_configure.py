@@ -53,22 +53,28 @@ def read_config_file_input():
     if not downloads_file:
         downloads_file = config.DEFAULT_DOWNLOAD
 
+    password_cache_ttl_sec = input(
+        "Max time in days for the passwords to be cached [%s]: " % config.DEFAULT_PASSWORD_CACHE_TTL_DAYS).strip()
+    if not password_cache_ttl_sec:
+        password_cache_ttl_sec = config.DEFAULT_PASSWORD_CACHE_TTL_DAYS
+    password_cache_ttl_sec = int(password_cache_ttl_sec) * 24 * 60 * 60
+
     return (lander_host, login_host, user, password1, qr_secret, default_project_code, default_remote_directory,
-            uploads_file, downloads_file)
+        uploads_file, downloads_file, password_cache_ttl_sec)
 
 
 print('')
 print_underscored('Creating configuration file %s. Need some information.' % config.get_config_file())
 lander_host, login_host, user, password, qr_secret, default_project_code, default_remote_directory, uploads_file, \
-    downloads_file = read_config_file_input()
+    downloads_file, password_cache_ttl_sec = read_config_file_input()
 
-config.create_config_file(lander_host, login_host, default_project_code,
-                          default_remote_directory, uploads_file, downloads_file)
+config.create_config_file(lander_host, login_host, default_project_code, default_remote_directory,
+                          uploads_file, downloads_file)
 
 print('')
 print('Setting up password store (this may take a few seconds)')
 config.setup_security()
-config.setup_password_store(user, password, qr_secret)
+config.setup_password_store(user, password, qr_secret, password_cache_ttl_sec)
 print('')
 print('Done')
 

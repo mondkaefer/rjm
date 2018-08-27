@@ -15,19 +15,18 @@ CONFIG_DIR_NAME = '.remote_jobs'
 CONFIG_FILE_NAME = 'config.ini'
 # name of the gnupg dir
 GPG_DIR_NAME = 'gnupg'
-# max time to live of ssh agent
-GPG_AGENT_MAX_CACHE_TTL_SEC = 86400
 # name of the password store dir
 PASSWORD_STORE_DIR_NAME = 'password_store'
 # default lander host
 DEFAULT_LANDER_HOST = 'lander02.nesi.org.nz'
 # default login host
 DEFAULT_LOGIN_HOST = 'login.mahuika.nesi.org.nz'
-# Name of the file that contains the list of files to be uploaded before the job starts
+# name of the file that contains the list of files to be uploaded before the job starts
 DEFAULT_UPLOAD = 'rjm_uploads.txt'
-# Name of the file that contains the list of files to be downloaded after the job is done
+# name of the file that contains the list of files to be downloaded after the job is done
 DEFAULT_DOWNLOAD = 'rjm_downloads.txt'
-
+# default cache ttl
+DEFAULT_PASSWORD_CACHE_TTL_DAYS = 7
 
 class ConfigReader(ConfigParser):
     def as_dict(self):
@@ -179,7 +178,7 @@ def write_last_otp(otp):
     ps.insert_password('nesi/last_otp_used', otp)
 
 
-def setup_password_store(username, password, qr_secret):
+def setup_password_store(username, password, qr_secret, password_cache_ttl_sec):
     """ set up password store and store username, password and QR secret """
     gnupg_dir = '%s%s%s' % (get_config_dir(), os.path.sep, GPG_DIR_NAME)
     password_store_dir = '%s%s%s' % (get_config_dir(), os.path.sep, PASSWORD_STORE_DIR_NAME)
@@ -213,8 +212,8 @@ def setup_password_store(username, password, qr_secret):
     if os.path.exists(agent_config_file):
         os.remove(agent_config_file)
     with open(agent_config_file, 'w') as f:
-        f.write('default-cache-ttl %s%s' % (GPG_AGENT_MAX_CACHE_TTL_SEC, os.linesep))
-        f.write('max-cache-ttl %s%s' % (GPG_AGENT_MAX_CACHE_TTL_SEC, os.linesep))
+        f.write('default-cache-ttl %s%s' % (password_cache_ttl_sec, os.linesep))
+        f.write('max-cache-ttl %s%s' % (password_cache_ttl_sec, os.linesep))
 
     ### set up pass
     ps = pw_store.PasswordStore.init(fingerprint, password_store_dir)
