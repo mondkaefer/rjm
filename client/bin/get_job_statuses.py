@@ -7,21 +7,21 @@ import cer.client.util as util
 
 # information displayed as help by argparse
 h = {
-  'loglevel':
-    'level of log verbosity. default: %s. ' % util.DEFAULT_LOG_LEVEL.lower() +
-    'the higher the log level, more information will be printed.'
+    'loglevel':
+        'level of log verbosity. default: %s. ' % util.DEFAULT_LOG_LEVEL.lower() +
+        'the higher the log level, more information will be printed.'
 }
 
 parser = argparse.ArgumentParser(description='get status of all jobs on NeSI cluster, except those that are finishing.')
-parser.add_argument('-ll','--loglevel', help=h['loglevel'], required=False, type=str, choices=['debug','info','warn','error','critical'])
+parser.add_argument('-ll', '--loglevel', help=h['loglevel'], required=False, type=str,
+                    choices=['debug', 'info', 'warn', 'error', 'critical'])
 args = parser.parse_args()
 
 if args.loglevel:
-  util.setup_logging(None, args.loglevel)
-log = util.get_log()
+    util.setup_logging(None, args.loglevel)
 
-ssh_conn = None
 log = util.get_log()
+ssh_conn = None
 
 # Set up SSH connection
 try:
