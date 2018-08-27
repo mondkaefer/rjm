@@ -53,6 +53,12 @@ def read_config_file_input():
     if not downloads_file:
         downloads_file = config.DEFAULT_DOWNLOAD
 
+    default_remote_bin_dir = '/nesi/project/%s/rjm_bin' % default_project_code
+    remote_bin_dir = input(
+        "Directory remote directory where server-side rjm binaries are stored [%s]: " % default_remote_bin_dir).strip()
+    if not remote_bin_dir:
+        remote_bin_dir = default_remote_bin_dir
+
     password_cache_ttl_sec = input(
         "Max time in days for the passwords to be cached [%s]: " % config.DEFAULT_PASSWORD_CACHE_TTL_DAYS).strip()
     if not password_cache_ttl_sec:
@@ -60,16 +66,16 @@ def read_config_file_input():
     password_cache_ttl_sec = int(password_cache_ttl_sec) * 24 * 60 * 60
 
     return (lander_host, login_host, user, password1, qr_secret, default_project_code, default_remote_directory,
-        uploads_file, downloads_file, password_cache_ttl_sec)
+        uploads_file, downloads_file, remote_bin_dir, password_cache_ttl_sec)
 
 
 print('')
 print_underscored('Creating configuration file %s. Need some information.' % config.get_config_file())
 lander_host, login_host, user, password, qr_secret, default_project_code, default_remote_directory, uploads_file, \
-    downloads_file, password_cache_ttl_sec = read_config_file_input()
+    downloads_file, remote_bin_dir, password_cache_ttl_sec = read_config_file_input()
 
 config.create_config_file(lander_host, login_host, default_project_code, default_remote_directory,
-                          uploads_file, downloads_file)
+                          uploads_file, downloads_file, remote_bin_dir)
 
 print('')
 print('Setting up password store (this may take a few seconds)')

@@ -85,8 +85,8 @@ def create_config_dir():
 
 
 
-def create_config_file(lander_host, login_host, default_project_code,
-                       default_remote_directory, rjm_upload, rjm_download):
+def create_config_file(lander_host, login_host, default_project_code, default_remote_directory,
+                       rjm_upload, rjm_download, remote_bin_dir):
     """ create the configuration file.
         if the configuration directory does not exist, it will be created.
     """
@@ -97,11 +97,11 @@ def create_config_file(lander_host, login_host, default_project_code,
     f.write('login_host=%s%s' % (login_host, os.linesep))
     f.write('default_project_code=%s%s' % (default_project_code, os.linesep))
     f.write('default_remote_directory=%s%s' % (default_remote_directory, os.linesep))
-    f.write('remote_prepare_job=%s%s' % ('/home/mfel395/bin/rjm/0.1/prepare_job', os.linesep))
-    f.write('remote_submit_job=%s%s' % ('/home/mfel395/bin/rjm/0.1/submit_job', os.linesep))
-    f.write('remote_is_job_done=%s%s' % ('/home/mfel395/bin/rjm/0.1/is_job_done', os.linesep))
-    f.write('remote_get_job_statuses=%s%s' % ('/home/mfel395/bin/rjm/0.1/get_job_statuses', os.linesep))
-    f.write('remote_cancel_jobs=%s%s' % ('/home/mfel395/bin/rjm/0.1/cancel_jobs', os.linesep))
+    f.write('remote_prepare_job=%s/prepare_job%s' % (remote_bin_dir, os.linesep))
+    f.write('remote_submit_job=%s/submit_job%s' % (remote_bin_dir, os.linesep))
+    f.write('remote_is_job_done=%s/is_job_done%s' % (remote_bin_dir, os.linesep))
+    f.write('remote_get_job_statuses=%s/get_job_statuses%s' % (remote_bin_dir, os.linesep))
+    f.write('remote_cancel_jobs=%s/cancel_jobs%s' % (remote_bin_dir, os.linesep))
     f.write('%s' % os.linesep)
     f.write('[FILE_TRANSFER]%s' % os.linesep)
     f.write('uploads_file=%s%s' % (rjm_upload, os.linesep))
