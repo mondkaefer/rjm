@@ -49,7 +49,7 @@ def setup_logging(logfile, loglevel):
   if loglevel:
     LOGGER.setLevel(eval("logging.%s" % loglevel.upper()))
   if logfile:
-    file_handler = FileHandler(filename=logfile, mode='w+b')
+    file_handler = FileHandler(filename=logfile, mode='w')
     file_handler.setFormatter(logging.Formatter(FORMAT))
     mem_handler = MemoryHandler(capacity=8192, flushLevel=logging.DEBUG, target=file_handler)
     for h in LOGGER.handlers:
