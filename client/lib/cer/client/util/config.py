@@ -3,11 +3,7 @@ import cer.client.util as util
 import shutil
 import gnupg
 import cer.client.pypass.passwordstore as pw_store
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import SafeConfigParser as ConfigParser
+from configparser import ConfigParser
 
 # name of the configuration directory
 CONFIG_DIR_NAME = '.remote_jobs'
