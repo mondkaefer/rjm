@@ -47,7 +47,7 @@ def open_connection(lander_host, login_host, user, password, qr_secret):
 
     try:
 
-        util.get_log().info('setting up ssh connection to cluster')
+        util.get_log().debug('setting up ssh connection to cluster')
         lander_client = paramiko.SSHClient()
         lander_client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
