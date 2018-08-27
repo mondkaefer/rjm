@@ -1,6 +1,6 @@
+import sys
 import getpass
 import cer.client.util.config as config
-from six.moves import input
 
 def print_underscored(msg):
     print(msg)
@@ -15,7 +15,12 @@ def read_config_file_input():
         else:
             print("NeSI cluster username must not be empty")
 
-    password = getpass.getpass(prompt='NeSI password: ')
+    password1 = getpass.getpass(prompt='NeSI password: ')
+    password2 = getpass.getpass(prompt='Repeat password: ')
+    if password1 != password2:
+        print('Passwords don\'t match. Please start over')
+        sys.exit(1)
+
     qr_secret = getpass.getpass(prompt='QR code secret: ')
 
     while True:
@@ -48,7 +53,7 @@ def read_config_file_input():
     if not downloads_file:
         downloads_file = config.DEFAULT_DOWNLOAD
 
-    return (lander_host, login_host, user, password, qr_secret, default_project_code, default_remote_directory,
+    return (lander_host, login_host, user, password1, qr_secret, default_project_code, default_remote_directory,
             uploads_file, downloads_file)
 
 
