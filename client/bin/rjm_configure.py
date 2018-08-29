@@ -1,5 +1,8 @@
+import os
 import sys
 import getpass
+import traceback
+import cer.client.ssh as ssh
 import cer.client.util.config as config
 
 def print_underscored(msg):
@@ -55,7 +58,7 @@ def read_config_file_input():
 
     default_remote_bin_dir = '/nesi/project/%s/rjm_bin' % default_project_code
     remote_bin_dir = input(
-        "Directory remote directory where server-side rjm binaries are stored [%s]: " % default_remote_bin_dir).strip()
+        "Remote directory where server-side rjm binaries are stored [%s]: " % default_remote_bin_dir).strip()
     if not remote_bin_dir:
         remote_bin_dir = default_remote_bin_dir
 
@@ -78,9 +81,42 @@ config.create_config_file(lander_host, login_host, default_project_code, default
                           uploads_file, downloads_file, remote_bin_dir)
 
 print('')
-print('Setting up password store (this may take a few seconds)')
+print_underscored('Setting up password store (this may take a few seconds)')
 config.setup_security()
 config.setup_password_store(user, password, qr_secret, password_cache_ttl_sec)
 print('')
-print('Done')
 
+print('')
+print_underscored('Setting up remote job management scripts')
+print('Do you want to copy the remote scripts onto the server?')
+copy_scripts = input('Enter \'y\' for yes or any other key for no: ')
+if copy_scripts == 'y':
+    # check for existence of server-side scripts
+    for acronym in config.SERVER_SIDE_SCRIPTS.keys():
+        script = config.SERVER_SIDE_SCRIPTS[acronym]
+        if not os.path.isfile(script):
+            print('Cannot find file %s in current directory' % script)
+            sys.exit(1)
+
+    # set up SSH connection
+    try:
+        ssh_conn = ssh.open_connection_with_config()
+    except:
+        print('Failed to set up SSH connection')
+        print(traceback.format_exc())
+        sys.exit(1)
+
+    ssh.run('mkdir -p %s ' % remote_bin_dir, ssh_conn)
+    sftp = ssh_conn.open_sftp()
+
+    for acronym in config.SERVER_SIDE_SCRIPTS.keys():
+        script = config.SERVER_SIDE_SCRIPTS[acronym]
+        print('Uploading file %s' % script)
+        destination = '%s/%s' % (remote_bin_dir, script)
+        sftp.put(script, destination)
+        ssh.run('chmod ug+x %s' % destination, ssh_conn)
+
+    ssh.close_connection(ssh_conn)
+print('')
+
+print('Done')

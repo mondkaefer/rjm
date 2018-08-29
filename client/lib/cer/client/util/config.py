@@ -1,7 +1,7 @@
 import os
-import cer.client.util as util
 import shutil
 import gnupg
+import cer.client.util as util
 import cer.client.pypass.passwordstore as pw_store
 from configparser import ConfigParser
 
@@ -23,6 +23,10 @@ DEFAULT_UPLOAD = 'rjm_uploads.txt'
 DEFAULT_DOWNLOAD = 'rjm_downloads.txt'
 # default cache ttl
 DEFAULT_PASSWORD_CACHE_TTL_DAYS = 7
+# server side scripts
+SERVER_SIDE_SCRIPTS = dict(CJ='cancel_jobs', GJS='get_job_statuses', IJD='is_job_done', PJ='prepare_job',
+                           SJ='submit_job')
+
 
 class ConfigReader(ConfigParser):
     def as_dict(self):
@@ -97,11 +101,11 @@ def create_config_file(lander_host, login_host, default_project_code, default_re
     f.write('login_host=%s%s' % (login_host, os.linesep))
     f.write('default_project_code=%s%s' % (default_project_code, os.linesep))
     f.write('default_remote_directory=%s%s' % (default_remote_directory, os.linesep))
-    f.write('remote_prepare_job=%s/prepare_job%s' % (remote_bin_dir, os.linesep))
-    f.write('remote_submit_job=%s/submit_job%s' % (remote_bin_dir, os.linesep))
-    f.write('remote_is_job_done=%s/is_job_done%s' % (remote_bin_dir, os.linesep))
-    f.write('remote_get_job_statuses=%s/get_job_statuses%s' % (remote_bin_dir, os.linesep))
-    f.write('remote_cancel_jobs=%s/cancel_jobs%s' % (remote_bin_dir, os.linesep))
+    f.write('remote_prepare_job=%s/%s%s' % (remote_bin_dir, SERVER_SIDE_SCRIPTS['PJ'], os.linesep))
+    f.write('remote_submit_job=%s/%s%s' % (remote_bin_dir, SERVER_SIDE_SCRIPTS['SJ'], os.linesep))
+    f.write('remote_is_job_done=%s/%s%s' % (remote_bin_dir, SERVER_SIDE_SCRIPTS['IJD'], os.linesep))
+    f.write('remote_get_job_statuses=%s/%s%s' % (remote_bin_dir, SERVER_SIDE_SCRIPTS['GJS'], os.linesep))
+    f.write('remote_cancel_jobs=%s/%s%s' % (remote_bin_dir, SERVER_SIDE_SCRIPTS['CJ'],  os.linesep))
     f.write('%s' % os.linesep)
     f.write('[FILE_TRANSFER]%s' % os.linesep)
     f.write('uploads_file=%s%s' % (rjm_upload, os.linesep))
