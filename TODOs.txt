@@ -1,3 +1,3 @@
 * make password labels in pass configurable
 * fix octave version in module load command in rjm_test
-
+* add top_level.txt with value "gnupg" into EGG_INFO for python-gnupg for pyInstaller to work
