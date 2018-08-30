@@ -91,7 +91,7 @@ def create_job_description(jobdir, cmds, walltime, mem, jobtype, projectcode):
     job_file = '%s%s.job.txt' % (jobdir, os.path.sep)
     f = open(job_file, "w+")
     f.write('#!/bin/bash%s' % os.linesep)
-    f.write('# #SBATCH -A %s%s' % (projectcode, os.linesep))
+    f.write('#SBATCH -A %s%s' % (projectcode, os.linesep))
     f.write('#SBATCH --workdir=%s%s' % (jobdir, os.linesep))
     f.write('#SBATCH --output=stdout.txt%s' % os.linesep)
     f.write('#SBATCH --error=stderr.txt%s' % os.linesep)
