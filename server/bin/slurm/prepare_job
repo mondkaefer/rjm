@@ -7,7 +7,7 @@ import argparse
 import traceback
 import binascii
 
-walltime_pattern = re.compile(r'^\d{1,2}$|^\d{1,2}:\d{1,2}$|^\d+:\d{1,2}:\d{1,2}$')
+walltime_pattern = re.compile(r'^\d{1,2}$|^\d{1,2}:\d{1,2}$|^\d{1,2}:\d{1,2}:\d{1,2}$')
 memory_pattern = re.compile(r'^\d+[MG]$')
 jobtype_pattern = re.compile(r'^serial$|^serial:\d+$|^mpi:\d+$|^mpi:\d+:\d+$')
 
