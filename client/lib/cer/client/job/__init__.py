@@ -8,7 +8,7 @@ cluster = conf['CLUSTER']
 
 
 def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projectcode):
-    commandline = 'bash %s ' % cluster['remote_prepare_job'] + \
+    commandline = '%s ' % cluster['remote_prepare_job'] + \
                   '--basedir "%s" ' % basedir + \
                   '--jobname "%s" ' % jobname.replace(" ", "_") + \
                   '--mem %s ' % mem + \
@@ -19,6 +19,7 @@ def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projec
     for cmd in cmds:
         commandline = '%s %s' % (commandline, '--cmd \'%s\' ' % cmd)
 
+    print(commandline)
     rc, stdout, stderr = ssh.run(commandline, ssh_conn)
     if rc != 0:
         msg = 'Error: Failed to prepare job%s' % os.linesep
@@ -29,7 +30,7 @@ def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projec
 
 
 def submit_job(ssh_conn, remote_job_description_file):
-    cmd = 'bash %s %s' % (cluster['remote_submit_job'], remote_job_description_file)
+    cmd = '%s %s' % (cluster['remote_submit_job'], remote_job_description_file)
     rc, stdout, stderr = ssh.run(cmd, ssh_conn)
     if rc != 0:
         msg = 'Error: Failed to submit job%s' % os.linesep
@@ -40,7 +41,7 @@ def submit_job(ssh_conn, remote_job_description_file):
 
 
 def has_finished(ssh_conn, jobid):
-    cmd = 'bash %s %s' % (cluster['remote_is_job_done'], jobid)
+    cmd = '%s %s' % (cluster['remote_is_job_done'], jobid)
     rc, stdout, stderr = ssh.run(cmd, ssh_conn)
     if rc != 0:
         msg = 'Error: Failed to get job status for job %s%s' % (jobid, os.linesep)
@@ -50,7 +51,7 @@ def has_finished(ssh_conn, jobid):
 
 
 def get_job_statuses(ssh_conn):
-    cmd = 'bash %s' % (cluster['remote_get_job_statuses'])
+    cmd = '%s' % (cluster['remote_get_job_statuses'])
     rc, stdout, stderr = ssh.run(cmd, ssh_conn)
     if rc != 0:
         msg = 'Error: Failed to get job statuses.%s' % (os.linesep)
@@ -67,7 +68,7 @@ def get_job_statuses(ssh_conn):
 
 def cancel_jobs(ssh_conn, jobids):
     if jobids:
-        cmd = 'bash %s %s' % (cluster['remote_cancel_jobs'], ' '.join(jobids))
+        cmd = '%s %s' % (cluster['remote_cancel_jobs'], ' '.join(jobids))
         rc, stdout, stderr = ssh.run(cmd, ssh_conn)
         if rc != 0:
             msg = 'Error: Failed to cancel jobs.%s' % (os.linesep)
