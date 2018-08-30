@@ -1,4 +1,4 @@
-#!/share/apps/Python/noarch/2.7.4/gcc-4.4.6/bin/python
+#!/usr/bin/python
 import re
 import os
 import sys
@@ -150,7 +150,7 @@ except:
 # Create job description
 try:
     jobfile = create_job_description(jobdir, args.cmd, args.walltime, args.mem, args.jobtype, args.projectcode)
-    print '%s,%s' % (jobdir, jobfile)
+    print('%s,%s' % (jobdir, jobfile))
 except:
     print >> sys.stderr, 'Error: Creation of job description failed.'
     print >> sys.stderr, traceback.format_exc()
