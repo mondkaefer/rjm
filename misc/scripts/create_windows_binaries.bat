@@ -16,3 +16,4 @@ pyinstaller -F rjm_batch_wait.py
 pyinstaller -F rjm_batch_cancel.py
 pyinstaller -F rjm_batch_clean.py
 pyinstaller -F run_remote.py
+pyinstaller -F upload_files.py

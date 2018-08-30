@@ -18,3 +18,4 @@ pyinstaller -F --clean --noupx rjm_batch_wait.py
 pyinstaller -F --clean --noupx rjm_batch_cancel.py
 pyinstaller -F --clean --noupx rjm_batch_clean.py
 pyinstaller -F --clean --noupx run_remote.py
+pyinstaller -F --clean --noupx upload_files.py
