@@ -19,7 +19,6 @@ def prepare_job(ssh_conn, basedir, jobname, cmds, mem, walltime, jobtype, projec
     for cmd in cmds:
         commandline = '%s %s' % (commandline, '--cmd \'%s\' ' % cmd)
 
-    print(commandline)
     rc, stdout, stderr = ssh.run(commandline, ssh_conn)
     if rc != 0:
         msg = 'Error: Failed to prepare job%s' % os.linesep
