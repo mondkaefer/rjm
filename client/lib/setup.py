@@ -7,5 +7,5 @@ setup(
   author='Martin Feller',
   author_email='m.feller@auckland.ac.nz',
   packages=['cer', 'cer.client', 'cer.client.util', 'cer.client.ssh', 'cer.client.job', 'cer.client.pypass'],
-  install_requires=['paramiko', 'pyotp', 'python-gnupg', 'pyInstaller', 'prompt_toolkit']
+  install_requires=['paramiko', 'pyotp', 'python-gnupg', 'pyInstaller']
 )
