@@ -11,11 +11,10 @@ from cer.client.util import Retry
 
 def cleanup():
     """ close ssh connection. """
-    if ssh_conn:
-        try:
-            ssh.close_connection(ssh_conn)
-        except:
-            pass
+    try:
+        ssh.close_connection(ssh_conn)
+    except:
+        pass
 
 
 # help information displayed by argparse
@@ -100,7 +99,14 @@ def prepare_job(ssh_conn, args):
 def stage_in_file(local_file, remote_file):
     """ upload individual input file. """
     log.debug('Uploading local file %s to remote file %s' % (local_file, remote_file))
-    sftp.put(local_file, remote_file)
+    if os.path.isfile(local_file):
+        sftp.put(local_file, remote_file)
+    else:
+        msg = 'local file %s does not exist. exiting.' % local_file
+        print(msg, file=sys.stderr)
+        log.critical(msg)
+        cleanup()
+        sys.exit(1)
 
 
 @Retry(conf['RETRY']['max_attempts'], conf['RETRY']['min_wait_s'], conf['RETRY']['max_wait_s'])
@@ -161,7 +167,7 @@ except:
 args.projectcode = conf['CLUSTER']['default_project_code'] if not args.projectcode else args.projectcode
 args.remotedir = conf['CLUSTER']['default_remote_directory'] if not args.remotedir else args.remotedir
 
-sftp = ssh_conn.open_sftp()
+sftp = ssh_conn.open_sftp_client()
 
 # create remote job directories, stage files in, submit jobs
 for localdir in localdirs:

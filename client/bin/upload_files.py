@@ -46,7 +46,7 @@ except:
 
 try:
     rc, stdout, stderr = ssh.run('mkdir -p %s' % args.remote_directory, ssh_conn)
-    sftp = ssh_conn.open_sftp()
+    sftp = ssh_conn.open_sftp_client()
     for f in args.file:
         print('Uploading file %s to %s' % (f, args.remote_directory))
         destination = '%s/%s' % (args.remote_directory, ntpath.basename(f))

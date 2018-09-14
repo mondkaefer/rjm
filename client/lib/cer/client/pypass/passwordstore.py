@@ -5,10 +5,9 @@
 
 import os
 import subprocess
-import string
-import random
 import re
 import cer.client.util as util
+from cer.client.util import config as config
 
 from .entry_type import EntryType
 
@@ -86,14 +85,16 @@ class PasswordStore(object):
         gpg = subprocess.Popen(
             [
                 GPG_BIN,
+                '--homedir',
+                '%s%s%s' % (config.get_config_dir(), os.path.sep, config.GPG_DIR_NAME),
                 '--quiet',
                 '--batch',
                 '--use-agent',
-                '-d', passfile_path,
+                '-d',
+                passfile_path
             ],
             shell=False,
             stdout=subprocess.PIPE,
-            env=os.environ.copy()
         )
         gpg.wait()
 
@@ -139,17 +140,19 @@ class PasswordStore(object):
         gpg = subprocess.Popen(
             [
                 GPG_BIN,
+                '--homedir',
+                '%s%s%s' % (config.get_config_dir(), os.path.sep, config.GPG_DIR_NAME),
                 '-e',
                 '-r', self.gpg_id,
                 '--batch',
                 '--use-agent',
                 '--no-tty',
                 '--yes',
-                '-o', passfile_path
+                '-o',
+                passfile_path
             ],
             shell=False,
-            stdin=subprocess.PIPE,
-            env=os.environ.copy()
+            stdin=subprocess.PIPE
         )
 
         gpg.stdin.write(password.encode())

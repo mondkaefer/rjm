@@ -38,7 +38,7 @@ except:
     log.error(traceback.format_exc())
     sys.exit(1)
 
-rc, stdout, stderr = ssh.run(args.command_and_args[0], ssh_conn)
+rc, stdout, stderr = ssh.exec_command(args.command_and_args[0], ssh_conn)
 ssh.close_connection(ssh_conn)
 
 print('[rc]:%s%s%s' % (os.linesep,rc,os.linesep))

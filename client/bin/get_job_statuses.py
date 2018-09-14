@@ -27,7 +27,9 @@ ssh_conn = None
 try:
     ssh_conn = ssh.open_connection_with_config()
 except:
-    log.error('Failed to set up SSH connection')
+    msg = 'failed to set up ssh connection. exiting.'
+    print(msg, file=sys.stderr)
+    log.error(msg)
     log.error(traceback.format_exc())
     sys.exit(1)
 
@@ -36,7 +38,9 @@ jobmap = {}
 try:
     jobmap = job.get_job_statuses(ssh_conn)
 except:
-    log.error('Remote command to prepare job failed.')
+    msg = 'failed to get job statuses. exiting.'
+    print(msg, file=sys.stderr)
+    log.error(msg)
     log.error(traceback.format_exc())
     sys.exit(1)
 

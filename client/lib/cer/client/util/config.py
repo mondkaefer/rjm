@@ -22,7 +22,7 @@ DEFAULT_UPLOAD = 'rjm_uploads.txt'
 # name of the file that contains the list of files to be downloaded after the job is done
 DEFAULT_DOWNLOAD = 'rjm_downloads.txt'
 # default cache ttl
-DEFAULT_PASSWORD_CACHE_TTL_DAYS = 7
+DEFAULT_PASSWORD_CACHE_TTL_DAYS = 30
 # server side scripts
 SERVER_SIDE_SCRIPTS = dict(CJ='cancel_jobs', GJS='get_job_statuses', IJD='is_job_done', PJ='prepare_job',
                            SJ='submit_job')
@@ -50,7 +50,6 @@ def get_config_dir():
 def setup_security():
     """ set up environment variables used by pass and gnupg """
     os.environ['PASSWORD_STORE_DIR'] = '%s%s%s' % (get_config_dir(), os.path.sep, PASSWORD_STORE_DIR_NAME)
-    os.environ['GNUPGHOME'] = '%s%s%s' % (get_config_dir(), os.path.sep, GPG_DIR_NAME)
 
 
 def get_password_store_location():
