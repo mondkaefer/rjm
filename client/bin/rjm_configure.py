@@ -1,12 +1,45 @@
 import os
 import sys
-import getpass
+import cer.client.util as util
 import cer.client.util.config as config
-from prompt_toolkit import prompt
+
 
 def print_underscored(msg):
     print(msg)
     print('#' * len(msg))
+
+
+# method for Windows to print * for every character typed when being asked for a password
+if util.platform_is_windows():
+    import msvcrt
+    def win_getpass(prompt):
+        """Prompt for password with echo off, using Windows getch()."""
+        import msvcrt
+        for c in prompt:
+            msvcrt.putwch(c)
+        pw = ""
+        while 1:
+            c = msvcrt.getwch()
+            if c == '\r' or c == '\n':
+                break
+            if c == '\003':
+                raise KeyboardInterrupt
+            if c == '\b':
+                if pw == '':
+                    pass
+                else:
+                    pw = pw[:-1]
+                    msvcrt.putwch('\b')
+                    msvcrt.putwch(" ")
+                    msvcrt.putwch('\b')
+            else:
+                pw = pw + c
+                msvcrt.putwch("*")
+        msvcrt.putwch('\r')
+        msvcrt.putwch('\n')
+        return pw
+else:
+    import getpass
 
 
 def read_config_file_input():
@@ -17,13 +50,21 @@ def read_config_file_input():
         else:
             print("NeSI username must not be empty")
 
-    password1 = prompt('NeSI password: ', is_password=True)
-    password2 = prompt('Repeat password: ', is_password=True)
+    if util.platform_is_windows():
+        password1 = win_getpass('NeSI password: ')
+        password2 = win_getpass('Repeat password: ')
+    else:
+        password1 = getpass.getpass('NeSI password: ')
+        password2 = getpass.getpass('Repeat password: ')
+
     if password1 != password2:
         print('Passwords don\'t match. Please start over')
         sys.exit(1)
 
-    qr_secret = prompt('QR code secret: ', is_password=True)
+    if util.platform_is_windows():
+        qr_secret = win_getpass('QR code secret: ')
+    else:
+        qr_secret = getpass.getpass('QR code secret: ')
 
     while True:
         default_project_code = input("Default project code: ").strip()
