@@ -120,10 +120,10 @@ log.info('waiting for jobs to be cancelled (polling every %s seconds)...' % args
 while True:
 
     error_count = 0
+    error_occurred = False
 
     try:
         log.info('waiting for cancellation of %s jobs...' % len(jobids))
-        error_occured = False
         jobids_new = []
         log.debug('getting job statuses')
         jobmap = job.get_job_statuses(ssh_conn)

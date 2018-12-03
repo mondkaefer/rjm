@@ -163,7 +163,7 @@ log.info('waiting for jobs to finish (polling every %s seconds)...' % args.polli
 while True:
     try:
         log.info('checking for job status of %s jobs...' % len(jobs))
-        error_occured = False
+        error_occurred = False
         jobs_new = {}
         log.debug('getting job statuses')
         jobmap = job.get_job_statuses(ssh_conn)
@@ -179,7 +179,7 @@ while True:
             else:
                 jobs_new[job_id] = jobs[job_id]
     except:
-        error_occured = True
+        error_occurred = True
         log.warn('failed to get status. only critical if happens repeatedly. %s' % traceback.format_exc().strip())
 
     # TODO: fail after N failed attempts
@@ -187,7 +187,7 @@ while True:
     if len(jobs_new) > 0:
         jobs = jobs_new
     else:
-        if not error_occured:
+        if not error_occurred:
             break
 
     time.sleep(args.pollingintervalsec)
