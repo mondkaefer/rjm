@@ -9,7 +9,7 @@ All commands are issued over a single SSH connection to achieve robustness and s
 Born out of frustration with notoriously unreliable and non-scaling Grid Middleware stacks.
 
 **Documentation**:
-https://wiki.auckland.ac.nz/display/CER/Lightweight+Remote+Job+Management
+https://wiki.auckland.ac.nz/display/CERES/Lightweight+Remote+Job+Management
 
 **Note**:
 This is not yet a general-purpose tool, but tailored for researchers using the Auckland NeSI cluster.
