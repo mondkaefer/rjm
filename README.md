@@ -12,5 +12,5 @@ Born out of frustration with notoriously unreliable and non-scaling Grid Middlew
 https://wiki.auckland.ac.nz/display/CERES/Lightweight+Remote+Job+Management
 
 **Note**:
-This is not yet a general-purpose tool, but tailored for researchers using the Auckland NeSI cluster.
+This is not a general-purpose tool, but tailored for researchers using the Auckland NeSI cluster. It's also no longer supported.
 The batch scheduling system in use is Slurm.
